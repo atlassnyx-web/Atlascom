@@ -2,460 +2,719 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>فوج النيبة</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e0a">
+<title>فوج النيبة — صياد الزومبي</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: #0f0f1a; color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; }
-body { display: flex; flex-direction: column; }
+  * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#0a0e0a; color:#e8f5e9; font-family:'Segoe UI', Tahoma, sans-serif; touch-action:none; }
+  #canvas { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
 
-/* ===== الهيدر: فوج النيبة ===== */
-.header {
-  background: #16162a;
-  padding: 8px 12px;
-  text-align: center;
-  border-bottom: 1px solid #2a2a4a;
-}
-.title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #f5c518;
-  letter-spacing: 1px;
-  text-shadow: 0 0 4px rgba(245,197,24,0.5), 0 0 8px rgba(245,197,24,0.3);
-  animation: glowPulse 2.4s ease-in-out infinite alternate;
-}
-@keyframes glowPulse {
-  from { text-shadow: 0 0 3px rgba(245,197,24,0.4), 0 0 7px rgba(245,197,24,0.2); opacity: 0.92; }
-  to   { text-shadow: 0 0 8px rgba(245,197,24,0.8), 0 0 16px rgba(245,197,24,0.4); opacity: 1; }
-}
-.stats {
-  display: flex;
-  justify-content: space-around;
-  padding: 6px 0 4px;
-  font-size: 14px;
-  font-weight: 600;
-}
-.stats .score { color: #f5c518; }
-.stats .level { color: #4ade80; }
+  /* ===== HUD ===== */
+  #hud {
+    position:absolute; top:10px; right:10px;
+    display:flex; gap:8px; z-index:5; pointer-events:none;
+  }
+  .hud-stat {
+    background:rgba(0,0,0,0.55);
+    border:1px solid rgba(120,200,120,0.3);
+    border-radius:8px; padding:5px 10px;
+    display:flex; flex-direction:column; align-items:center;
+    min-width:56px;
+  }
+  .hud-lbl { font-size:10px; color:#8bc34a; }
+  .hud-val { font-size:16px; font-weight:800; color:#fff; }
+  #hpBar {
+    position:absolute; top:10px; left:10px;
+    width:140px; height:14px;
+    background:rgba(0,0,0,0.55);
+    border:1px solid rgba(120,200,120,0.3);
+    border-radius:8px; overflow:hidden; z-index:5; pointer-events:none;
+  }
+  #hudHpFill { height:100%; width:100%; background:#4caf50; }
 
-/* ===== الكانفس ===== */
-#game-container { position: relative; flex: 1; overflow: hidden; }
-canvas { display: block; width: 100%; height: 100%; }
+  /* ===== Overlays ===== */
+  .overlay {
+    position:absolute; inset:0;
+    display:none; flex-direction:column;
+    justify-content:center; align-items:center;
+    background:radial-gradient(circle at center, rgba(10,30,10,0.94), rgba(0,0,0,0.97));
+    z-index:10; padding:20px; text-align:center; overflow-y:auto;
+  }
+  .overlay.show { display:flex; }
 
-/* ===== الأزرار ===== */
-.controls {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  background: #16162a;
-  border-top: 1px solid #2a2a4a;
-}
-.btn {
-  flex: 1;
-  padding: 22px 0;
-  font-size: 32px;
-  font-weight: bold;
-  border: none;
-  border-radius: 14px;
-  color: #fff;
-  cursor: pointer;
-  transition: transform 0.08s, filter 0.08s;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.4);
-}
-.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); filter: brightness(1.15); }
-.btn-left  { background: linear-gradient(180deg, #ef4444, #b91c1c); }
-.btn-right { background: linear-gradient(180deg, #3b82f6, #1d4ed8); }
+  .title {
+    font-size:34px; font-weight:900; letter-spacing:2px;
+    color:#f5c518;
+    text-shadow:0 0 8px rgba(245,197,24,0.5), 0 0 20px rgba(245,197,24,0.25);
+    animation:glow 2.4s ease-in-out infinite alternate;
+    margin-bottom:6px;
+  }
+  @keyframes glow {
+    from { text-shadow:0 0 5px rgba(245,197,24,0.4), 0 0 12px rgba(245,197,24,0.15); opacity:0.93; }
+    to   { text-shadow:0 0 12px rgba(245,197,24,0.85), 0 0 24px rgba(245,197,24,0.4); opacity:1; }
+  }
+  .subtitle { font-size:14px; color:#8bc34a; margin-bottom:22px; }
 
-/* ===== شاشة النهاية ===== */
-.overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(10,10,20,0.94);
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 20;
-  padding: 18px;
-  text-align: center;
-  overflow-y: auto;
-}
-.overlay.show { display: flex; }
-.overlay h1 { font-size: 26px; color: #ef4444; margin-bottom: 6px; }
-.overlay .final-score { font-size: 42px; font-weight: 800; color: #f5c518; margin: 8px 0 4px; text-shadow: 0 0 12px rgba(245,197,24,0.5); }
-.overlay .sub { font-size: 14px; color: #aaa; margin-bottom: 16px; }
-.overlay button {
-  padding: 14px 36px;
-  font-size: 18px;
-  font-weight: 700;
-  background: linear-gradient(180deg, #f5c518, #d4a017);
-  color: #1a1a1a;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  margin-bottom: 18px;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.4);
-}
-.overlay button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
-.overlay .btn-second { background: linear-gradient(180deg, #3b82f6, #1d4ed8); color: #fff; margin-top: -8px; }
+  .btn {
+    padding:16px 44px; font-size:20px; font-weight:800;
+    background:linear-gradient(180deg, #7cb342, #33691e);
+    color:#fff; border:none; border-radius:14px;
+    cursor:pointer; box-shadow:0 5px 0 #1b3a0a;
+    transition:transform 0.08s;
+    margin:6px 0;
+  }
+  .btn:active { transform:translateY(4px); box-shadow:0 1px 0 #1b3a0a; }
+  .btn.secondary { background:linear-gradient(180deg, #3b82f6, #1d4ed8); box-shadow:0 5px 0 #0c2d6b; }
 
-/* ===== لوحة المتصدرين المحلية ===== */
-.leaderboard {
-  width: 100%;
-  max-width: 320px;
-  background: #16162a;
-  border: 1px solid #2a2a4a;
-  border-radius: 12px;
-  padding: 12px;
-  margin-top: 8px;
-}
-.leaderboard h3 { font-size: 16px; color: #f5c518; margin-bottom: 10px; text-shadow: 0 0 6px rgba(245,197,24,0.4); }
-.leaderboard ul { list-style: none; }
-.leaderboard li {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 8px;
-  border-bottom: 1px solid #2a2a4a;
-  font-size: 14px;
-}
-.leaderboard li:last-child { border-bottom: none; }
-.leaderboard li .rank { color: #888; margin-left: 6px; }
-.leaderboard li .pts { color: #f5c518; font-weight: 700; }
-.leaderboard li.me { background: rgba(245,197,24,0.08); border-radius: 6px; }
+  .big-score { font-size:60px; font-weight:900; color:#f5c518; text-shadow:0 0 20px rgba(245,197,24,0.6); margin:10px 0; }
+  .stats-row { display:flex; gap:30px; margin:10px 0 22px; }
+  .stat { text-align:center; }
+  .stat-label { color:#999; font-size:13px; }
+  .stat-value { color:#fff; font-weight:700; font-size:20px; }
+
+  .leaderboard {
+    width:100%; max-width:340px;
+    background:rgba(20,30,20,0.9);
+    border:1px solid #2a3a2a; border-radius:12px;
+    padding:12px; margin-top:10px;
+  }
+  .leaderboard h3 { font-size:15px; color:#f5c518; margin-bottom:8px; }
+  .leaderboard ul { list-style:none; }
+  .leaderboard li {
+    display:flex; justify-content:space-between;
+    padding:6px 8px; font-size:14px;
+    border-bottom:1px solid #1a2a1a;
+  }
+  .leaderboard li:last-child { border-bottom:none; }
+  .leaderboard li.me { background:rgba(245,197,24,0.1); border-radius:6px; }
+  .leaderboard li .pts { color:#f5c518; font-weight:700; }
 </style>
 </head>
 <body>
+<canvas id="canvas"></canvas>
 
-<div class="header">
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-stat"><span class="hud-lbl">النقاط</span><span class="hud-val" id="hudScore">0</span></div>
+  <div class="hud-stat"><span class="hud-lbl">المستوى</span><span class="hud-val" id="hudLevel">1</span></div>
+  <div class="hud-stat"><span class="hud-lbl">قتلى</span><span class="hud-val" id="hudKills">0</span></div>
+</div>
+<div id="hpBar"><div id="hudHpFill"></div></div>
+
+<!-- Start Screen -->
+<div class="overlay show" id="startScreen">
   <div class="title">فوج النيبة</div>
-  <div class="stats">
-    <div>النقاط: <span class="score" id="scoreDisplay">0</span></div>
-    <div>المستوى: <span class="level" id="levelDisplay">1</span></div>
-  </div>
+  <div class="subtitle">🧟 صياد الزومبي 🎯</div>
+  <p style="max-width:300px;color:#bbb;font-size:14px;line-height:1.8;margin-bottom:22px;">
+    • المس يسار الشاشة وحرّك إصبعك للتنقل<br>
+    • الإطلاق النار <b style="color:#8bc34a;">تلقائي</b> على أقرب زومبي<br>
+    • كل 15 قتيل = مستوى جديد أصعب
+  </p>
+  <button class="btn" id="startBtn">▶ ابدأ اللعب</button>
 </div>
 
-<div id="game-container">
-  <canvas id="gameCanvas"></canvas>
-  <div class="overlay" id="gameOverScreen">
-    <h1>انتهت اللعبة!</h1>
-    <div class="final-score" id="finalScore">0</div>
-    <div class="sub">نقطة</div>
-    <button id="restartBtn">العب مرة أخرى 🔄</button>
-    <button class="btn-second" id="sendScoreBtn">أرسل نتيجتي للمجموعة 📤</button>
-    <div class="leaderboard">
-      <h3>🏆 أفضل اللاعبين (محلياً)</h3>
-      <ul id="leaderboardList"></ul>
-    </div>
+<!-- Game Over Screen -->
+<div class="overlay" id="gameOverScreen">
+  <div style="color:#ef4444;font-size:26px;font-weight:800;margin-bottom:4px;">💀 انتهت اللعبة</div>
+  <div class="big-score" id="finalScore">0</div>
+  <div style="color:#888;font-size:13px;margin-bottom:14px;">زومبي مقتول</div>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-label">المستوى</div><div class="stat-value" id="finalLevel">1</div></div>
+    <div class="stat"><div class="stat-label">الوقت</div><div class="stat-value" id="finalTime">0s</div></div>
   </div>
-</div>
-
-<div class="controls">
-  <button class="btn btn-left" id="leftBtn">◀</button>
-  <button class="btn btn-right" id="rightBtn">▶</button>
+  <button class="btn" id="restartBtn">🔄 العب مرة أخرى</button>
+  <button class="btn secondary" id="sendBtn">📤 أرسل نتيجتي للمجموعة</button>
+  <div class="leaderboard">
+    <h3>🏆 أفضل اللاعبين في هذه المجموعة</h3>
+    <ul id="leaderboardList"></ul>
+  </div>
 </div>
 
 <script>
-// ================== إعدادات تيليجرام ==================
+// ================= Telegram =================
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.expand();
-  tg.ready();
-  try { tg.setHeaderColor('#16162a'); } catch(e){}
-  try { tg.setBackgroundColor('#0f0f1a'); } catch(e){}
+if (tg) { try { tg.expand(); tg.ready(); tg.setHeaderColor('#0a0e0a'); tg.setBackgroundColor('#0a0e0a'); } catch(e){} }
+const tgUser = tg?.initDataUnsafe?.user || { first_name: 'لاعب', id: 0 };
+const tgChat = tg?.initDataUnsafe?.chat || null;
+
+// ================= Canvas =================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d', { alpha: false });
+let W = 0, H = 0, DPR = 1;
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width  = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 }
-const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : { first_name: 'لاعب', id: 0 };
-const tgChat = (tg && tg.initDataUnsafe && tg.initDataUnsafe.chat) ? tg.initDataUnsafe.chat : null;
+window.addEventListener('resize', resize);
+resize();
 
-// ================== إعداد اللعبة ==================
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let canvasWidth, canvasHeight;
+// ================= Game State =================
+const ARENA_W = 1600, ARENA_H = 1600;
+const state = {
+  mode: 'menu',
+  score: 0,
+  kills: 0,
+  level: 1,
+  time: 0,
+  player: null,
+  zombies: [],
+  bullets: [],
+  particles: [],
+  bloods: [],
+  camera: { x: 0, y: 0 },
+  spawnTimer: 0,
+  levelFlash: 0,
+  hitFlash: 0,
+  shake: 0,
+};
 
-function resizeCanvas() {
-  const rect = canvas.parentElement.getBoundingClientRect();
-  canvasWidth = rect.width;
-  canvasHeight = rect.height;
-  canvas.width = canvasWidth * devicePixelRatio;
-  canvas.height = canvasHeight * devicePixelRatio;
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-  car.y = canvasHeight - 110;
+function resetGame() {
+  state.mode = 'playing';
+  state.score = 0;
+  state.kills = 0;
+  state.level = 1;
+  state.time = 0;
+  state.zombies.length = 0;
+  state.bullets.length = 0;
+  state.particles.length = 0;
+  state.bloods.length = 0;
+  state.spawnTimer = 0.4;
+  state.levelFlash = 0;
+  state.hitFlash = 0;
+  state.shake = 0;
+  state.camera.x = 0; state.camera.y = 0;
+  state.player = {
+    x: ARENA_W/2, y: ARENA_H/2,
+    hp: 100, maxHp: 100,
+    speed: 240,
+    radius: 16,
+    aimAngle: 0,
+    fireCooldown: 0,
+    fireRate: 0.1,
+    damage: 35,
+    bulletSpeed: 900,
+  };
+  updateHUD();
 }
-window.addEventListener('resize', resizeCanvas);
 
-// حالة اللعبة
-let gameState = 'playing';
-let score = 0;
-let level = 1;
-let speed = 3;
-const BASE_SPEED = 3;
+// ================= Joystick =================
+const joy = { active:false, id:null, baseX:0, baseY:0, dx:0, dy:0, maxDist:55, rx:0, ry:0 };
 
-// السيارة
-const car = { x: 0, y: 0, width: 48, height: 78, lane: 1, targetX: 0 };
-let obstacles = [];
-let coins = [];
-let lastSpawnObstacle = 0;
-let lastSpawnCoin = 0;
-let gameStartTime = 0;
-
-function laneX(lane, objWidth) {
-  const laneW = canvasWidth / 3;
-  return lane * laneW + laneW / 2 - objWidth / 2;
-}
-
-function moveCar(dir) {
-  if (gameState !== 'playing') return;
-  const newLane = car.lane + dir;
-  if (newLane >= 0 && newLane <= 2) {
-    car.lane = newLane;
-    car.targetX = laneX(car.lane, car.width);
+canvas.addEventListener('pointerdown', (e) => {
+  if (state.mode !== 'playing') return;
+  if (!joy.active && e.clientX < W * 0.6) {
+    joy.active = true;
+    joy.id = e.pointerId;
+    joy.baseX = e.clientX;
+    joy.baseY = e.clientY;
+    joy.rx = e.clientX;
+    joy.ry = e.clientY;
+    joy.dx = 0; joy.dy = 0;
+    try { canvas.setPointerCapture(e.pointerId); } catch(_){}
   }
-}
-
-document.getElementById('leftBtn').addEventListener('click', () => moveCar(-1));
-document.getElementById('rightBtn').addEventListener('click', () => moveCar(1));
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowLeft')  moveCar(-1);
-  if (e.key === 'ArrowRight') moveCar(1);
 });
 
-// ================== التوليد ==================
-function spawnObstacle() {
-  const lane = Math.floor(Math.random() * 3);
-  const size = 42;
-  obstacles.push({ x: laneX(lane, size), y: -size, width: size, height: size, lane });
-  // منع تراكم العقبات في نفس المسار فوق بعض
-  if (Math.random() < 0.4) {
-    const otherLane = [0,1,2].filter(l => l !== lane)[Math.floor(Math.random()*2)];
-    obstacles.push({ x: laneX(otherLane, size), y: -size - 130, width: size, height: size, lane: otherLane });
+function onMove(e) {
+  if (!joy.active || e.pointerId !== joy.id) return;
+  let dx = e.clientX - joy.baseX;
+  let dy = e.clientY - joy.baseY;
+  const dist = Math.hypot(dx, dy);
+  if (dist > joy.maxDist) {
+    dx = dx / dist * joy.maxDist;
+    dy = dy / dist * joy.maxDist;
   }
+  joy.dx = dx / joy.maxDist;
+  joy.dy = dy / joy.maxDist;
+  joy.rx = joy.baseX + dx;
+  joy.ry = joy.baseY + dy;
 }
-function spawnCoin() {
-  const lane = Math.floor(Math.random() * 3);
-  const size = 28;
-  const y = -size - Math.random() * 60;
-  coins.push({ x: laneX(lane, size), y: y, width: size, height: size, lane });
-  // سلسلة عملات أحياناً
-  if (Math.random() < 0.5) {
-    coins.push({ x: laneX(lane, size), y: y - 50, width: size, height: size, lane });
-    coins.push({ x: laneX(lane, size), y: y - 100, width: size, height: size, lane });
-  }
+function onUp(e) {
+  if (e.pointerId !== joy.id) return;
+  joy.active = false; joy.id = null;
+  joy.dx = 0; joy.dy = 0;
+}
+window.addEventListener('pointermove', onMove);
+window.addEventListener('pointerup', onUp);
+window.addEventListener('pointercancel', onUp);
+
+// Keyboard (desktop test)
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup',   e => keys[e.key.toLowerCase()] = false);
+
+// ================= Zombie Types =================
+const ZOMBIE_TYPES = [
+  { hp:50,  speed:65,  radius:15, color:'#4caf50', damage:8,  weight:1.0 },
+  { hp:30,  speed:120, radius:12, color:'#8bc34a', damage:6,  weight:0.6 },
+  { hp:200, speed:45,  radius:22, color:'#2e7d32', damage:15, weight:0.3 },
+];
+
+function spawnZombie() {
+  const p = state.player;
+  const screenR = Math.max(W, H) * 0.75 + 100;
+  const angle = Math.random() * Math.PI * 2;
+  let x = p.x + Math.cos(angle) * screenR;
+  let y = p.y + Math.sin(angle) * screenR;
+  x = Math.max(20, Math.min(ARENA_W - 20, x));
+  y = Math.max(20, Math.min(ARENA_H - 20, y));
+
+  let type = ZOMBIE_TYPES[0];
+  const r = Math.random();
+  if (state.level >= 2 && r < 0.35) type = ZOMBIE_TYPES[1];
+  if (state.level >= 3 && r > 0.85) type = ZOMBIE_TYPES[2];
+
+  const hpMul    = 1 + (state.level - 1) * 0.10;
+  const speedMul = 1 + (state.level - 1) * 0.045;
+
+  state.zombies.push({
+    x, y,
+    hp: type.hp * hpMul,
+    maxHp: type.hp * hpMul,
+    speed: type.speed * speedMul,
+    radius: type.radius,
+    color: type.color,
+    damage: type.damage,
+    attackCooldown: 0,
+    wobble: Math.random() * Math.PI * 2,
+  });
 }
 
-// ================== التحديث ==================
+// ================= Particles =================
+function spawnParticles(x, y, color, count, speed) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = speed * (0.4 + Math.random() * 0.8);
+    state.particles.push({
+      x, y,
+      vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+      life: 0.5 + Math.random() * 0.3,
+      maxLife: 0.8,
+      color,
+      size: 2 + Math.random() * 2,
+    });
+  }
+}
+function addBlood(x, y) {
+  state.bloods.push({ x, y, r: 8 + Math.random() * 12, life: 6, maxLife: 6 });
+  if (state.bloods.length > 70) state.bloods.shift();
+}
+
+// ================= Fire =================
+function fireBullet(p, angle) {
+  const a = angle + (Math.random() - 0.5) * 0.05;
+  const mx = p.x + Math.cos(a) * (p.radius + 6);
+  const my = p.y + Math.sin(a) * (p.radius + 6);
+  state.bullets.push({
+    x: mx, y: my,
+    vx: Math.cos(a) * p.bulletSpeed,
+    vy: Math.sin(a) * p.bulletSpeed,
+    life: 1.2,
+    damage: p.damage,
+  });
+  spawnParticles(mx, my, '#ffeb3b', 2, 160);
+}
+
+// ================= Update =================
 function update(dt) {
-  if (gameState !== 'playing') return;
+  const p = state.player;
+  state.time += dt;
 
-  // حركة سلسة للسيارة
-  car.x += (car.targetX - car.x) * 0.28;
+  // Keyboard overlay
+  let kx = 0, ky = 0;
+  if (keys['w'] || keys['arrowup'])    ky -= 1;
+  if (keys['s'] || keys['arrowdown'])  ky += 1;
+  if (keys['a'] || keys['arrowleft'])  kx -= 1;
+  if (keys['d'] || keys['arrowright']) kx += 1;
+  const kl = Math.hypot(kx, ky);
+  if (kl > 0) { kx /= kl; ky /= kl; }
 
-  // المستوى والسرعة
-  level = Math.floor(score / 80) + 1;
-  speed = BASE_SPEED + (level - 1) * 0.45;
+  let mx = joy.dx + kx;
+  let my = joy.dy + ky;
+  const ml = Math.hypot(mx, my);
+  if (ml > 1) { mx /= ml; my /= ml; }
 
-  const now = performance.now();
+  // Move player
+  p.x += mx * p.speed * dt;
+  p.y += my * p.speed * dt;
+  p.x = Math.max(p.radius, Math.min(ARENA_W - p.radius, p.x));
+  p.y = Math.max(p.radius, Math.min(ARENA_H - p.radius, p.y));
 
-  // توليد العقبات
-  const obstacleInterval = Math.max(450, 1100 - level * 60);
-  if (now - lastSpawnObstacle > obstacleInterval) {
-    spawnObstacle();
-    lastSpawnObstacle = now;
+  // Camera smooth follow
+  const tcamX = p.x - W / 2;
+  const tcamY = p.y - H / 2;
+  const lerp = Math.min(1, dt * 12);
+  state.camera.x += (tcamX - state.camera.x) * lerp;
+  state.camera.y += (tcamY - state.camera.y) * lerp;
+  if (W >= ARENA_W) state.camera.x = (ARENA_W - W) / 2;
+  else state.camera.x = Math.max(0, Math.min(ARENA_W - W, state.camera.x));
+  if (H >= ARENA_H) state.camera.y = (ARENA_H - H) / 2;
+  else state.camera.y = Math.max(0, Math.min(ARENA_H - H, state.camera.y));
+
+  // Find nearest zombie (for auto-aim)
+  let nearest = null, nd = Infinity;
+  for (let i = 0; i < state.zombies.length; i++) {
+    const z = state.zombies[i];
+    const d = (z.x - p.x) ** 2 + (z.y - p.y) ** 2;
+    if (d < nd) { nd = d; nearest = z; }
   }
-  // توليد العملات
-  if (now - lastSpawnCoin > 700) {
-    spawnCoin();
-    lastSpawnCoin = now;
+  if (nearest) p.aimAngle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+
+  // Auto-fire
+  p.fireCooldown -= dt;
+  if (p.fireCooldown <= 0 && nearest) {
+    p.fireCooldown = p.fireRate;
+    fireBullet(p, p.aimAngle);
   }
 
-  // حركة العقبات
-  for (let i = obstacles.length - 1; i >= 0; i--) {
-    obstacles[i].y += speed;
-    if (obstacles[i].y > canvasHeight + 60) obstacles.splice(i, 1);
-  }
-  // حركة العملات
-  for (let i = coins.length - 1; i >= 0; i--) {
-    coins[i].y += speed;
-    if (coins[i].y > canvasHeight + 60) coins.splice(i, 1);
+  // Bullets
+  for (let i = state.bullets.length - 1; i >= 0; i--) {
+    const b = state.bullets[i];
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.life -= dt;
+    if (b.life <= 0 || b.x < -20 || b.x > ARENA_W + 20 || b.y < -20 || b.y > ARENA_H + 20) {
+      state.bullets.splice(i, 1);
+      continue;
+    }
+    let hit = false;
+    for (let j = state.zombies.length - 1; j >= 0; j--) {
+      const z = state.zombies[j];
+      const dx = b.x - z.x, dy = b.y - z.y;
+      const r = z.radius + 3;
+      if (dx*dx + dy*dy < r*r) {
+        z.hp -= b.damage;
+        spawnParticles(b.x, b.y, '#d32f2f', 4, 160);
+        state.bullets.splice(i, 1);
+        hit = true;
+        if (z.hp <= 0) killZombie(j);
+        break;
+      }
+    }
+    if (hit) continue;
   }
 
-  // تصادم
-  for (const obs of obstacles) {
-    if (car.x < obs.x + obs.width - 6 &&
-        car.x + car.width > obs.x + 6 &&
-        car.y < obs.y + obs.height - 6 &&
-        car.y + car.height > obs.y + 6) {
-      gameOver();
-      return;
+  // Zombies
+  for (let i = 0; i < state.zombies.length; i++) {
+    const z = state.zombies[i];
+    const dx = p.x - z.x, dy = p.y - z.y;
+    const d = Math.hypot(dx, dy) || 1;
+    z.wobble += dt * 3;
+    const wob = Math.sin(z.wobble) * 0.16;
+    const ax = dx / d, ay = dy / d;
+    const rx = ax - ay * wob;
+    const ry = ay + ax * wob;
+    z.x += rx * z.speed * dt;
+    z.y += ry * z.speed * dt;
+    z.x = Math.max(z.radius, Math.min(ARENA_W - z.radius, z.x));
+    z.y = Math.max(z.radius, Math.min(ARENA_H - z.radius, z.y));
+
+    if (d < p.radius + z.radius) {
+      z.attackCooldown -= dt;
+      if (z.attackCooldown <= 0) {
+        z.attackCooldown = 0.65;
+        p.hp -= z.damage;
+        state.hitFlash = 0.15;
+        state.shake = Math.min(8, state.shake + 4);
+        if (tg?.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('medium'); } catch(e){} }
+        if (p.hp <= 0) { p.hp = 0; updateHUD(); gameOver(); return; }
+      }
     }
   }
-  // جمع العملات
-  for (let i = coins.length - 1; i >= 0; i--) {
-    const c = coins[i];
-    if (car.x < c.x + c.width &&
-        car.x + car.width > c.x &&
-        car.y < c.y + c.height &&
-        car.y + car.height > c.y) {
-      score += 10;
-      coins.splice(i, 1);
-    }
+
+  // Spawn
+  state.spawnTimer -= dt;
+  if (state.spawnTimer <= 0) {
+    const baseInterval = Math.max(0.32, 1.6 - state.level * 0.09);
+    state.spawnTimer = baseInterval * (0.7 + Math.random() * 0.6);
+    spawnZombie();
+    if (state.level >= 4 && Math.random() < 0.35) spawnZombie();
+    if (state.level >= 7 && Math.random() < 0.30) spawnZombie();
   }
 
-  // تحديث الواجهة
-  document.getElementById('scoreDisplay').textContent = score;
-  document.getElementById('levelDisplay').textContent = level;
+  // Particles
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const pt = state.particles[i];
+    pt.x += pt.vx * dt;
+    pt.y += pt.vy * dt;
+    pt.vx *= 0.9;
+    pt.vy *= 0.9;
+    pt.life -= dt;
+    if (pt.life <= 0) state.particles.splice(i, 1);
+  }
+  // Blood
+  for (let i = state.bloods.length - 1; i >= 0; i--) {
+    state.bloods[i].life -= dt;
+    if (state.bloods[i].life <= 0) state.bloods.splice(i, 1);
+  }
+
+  if (state.levelFlash > 0) state.levelFlash -= dt;
+  if (state.hitFlash > 0)   state.hitFlash   -= dt;
+  if (state.shake > 0)      state.shake = Math.max(0, state.shake - dt * 40);
+
+  updateHUD();
 }
 
-// ================== الرسم ==================
-function draw() {
-  // خلفية + خطوط الطريق
-  const grd = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-  grd.addColorStop(0, '#1a1a2e');
-  grd.addColorStop(1, '#0f0f1a');
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+function killZombie(index) {
+  const z = state.zombies[index];
+  state.zombies.splice(index, 1);
+  state.kills++;
+  state.score++;
+  spawnParticles(z.x, z.y, '#4caf50', 12, 200);
+  spawnParticles(z.x, z.y, '#d32f2f', 6, 150);
+  addBlood(z.x, z.y);
+  if (state.kills > 0 && state.kills % 15 === 0) {
+    state.level++;
+    state.levelFlash = 1.4;
+    if (tg?.HapticFeedback) { try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){} }
+  }
+}
 
-  const laneW = canvasWidth / 3;
-  // خطوط الطريق
-  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-  ctx.lineWidth = 3;
-  ctx.setLineDash([22, 22]);
-  ctx.lineDashOffset = -(performance.now() / 30) % 44;
-  ctx.beginPath();
-  ctx.moveTo(laneW, 0);     ctx.lineTo(laneW, canvasHeight);
-  ctx.moveTo(laneW * 2, 0); ctx.lineTo(laneW * 2, canvasHeight);
-  ctx.stroke();
-  ctx.setLineDash([]);
+function gameOver() {
+  state.mode = 'over';
+  if (tg?.HapticFeedback) { try { tg.HapticFeedback.notificationOccurred('error'); } catch(e){} }
+  document.getElementById('finalScore').textContent = state.score;
+  document.getElementById('finalLevel').textContent = state.level;
+  document.getElementById('finalTime').textContent = Math.floor(state.time) + 's';
+  saveLocalScore();
+  renderLeaderboard();
+  document.getElementById('gameOverScreen').classList.add('show');
+}
 
-  // السيارة
+// ================= HUD =================
+function updateHUD() {
+  const p = state.player;
+  if (!p) return;
+  document.getElementById('hudScore').textContent = state.score;
+  document.getElementById('hudLevel').textContent = state.level;
+  document.getElementById('hudKills').textContent = state.kills;
+  const pct = Math.max(0, p.hp / p.maxHp * 100);
+  const fill = document.getElementById('hudHpFill');
+  fill.style.width = pct + '%';
+  fill.style.background = pct > 50 ? '#4caf50' : pct > 25 ? '#f5c518' : '#ef4444';
+}
+
+// ================= Render =================
+function render() {
+  const camX = state.camera.x, camY = state.camera.y;
+  const p = state.player;
+  const shX = state.shake > 0 ? (Math.random() - 0.5) * state.shake : 0;
+  const shY = state.shake > 0 ? (Math.random() - 0.5) * state.shake : 0;
+
   ctx.save();
-  ctx.shadowColor = '#ef4444';
-  ctx.shadowBlur = 14;
-  ctx.fillStyle = '#ef4444';
-  roundRect(car.x, car.y, car.width, car.height, 10);
+  ctx.translate(-camX + shX, -camY + shY);
+
+  // Background
+  ctx.fillStyle = '#0e1810';
+  ctx.fillRect(0, 0, ARENA_W, ARENA_H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(60, 120, 60, 0.12)';
+  ctx.lineWidth = 1;
+  const gs = 64;
+  const sx = Math.floor(camX / gs) * gs;
+  const sy = Math.floor(camY / gs) * gs;
+  const ex = camX + W + gs;
+  const ey = camY + H + gs;
+  ctx.beginPath();
+  for (let x = sx; x < ex; x += gs) { ctx.moveTo(x, camY); ctx.lineTo(x, camY + H); }
+  for (let y = sy; y < ey; y += gs) { ctx.moveTo(camX, y); ctx.lineTo(camX + W, y); }
+  ctx.stroke();
+
+  // Arena border
+  ctx.strokeStyle = 'rgba(120, 200, 120, 0.35)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(0, 0, ARENA_W, ARENA_H);
+
+  // Blood
+  for (const b of state.bloods) {
+    const a = Math.min(1, b.life / b.maxLife);
+    ctx.fillStyle = `rgba(90, 10, 10, ${a * 0.7})`;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Zombies
+  for (const z of state.zombies) {
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(z.x, z.y + z.radius * 0.8, z.radius * 0.9, z.radius * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // body
+    ctx.fillStyle = z.color;
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
+    ctx.fill();
+    // eyes toward player
+    const ex2 = p.x - z.x, ey2 = p.y - z.y;
+    const el = Math.hypot(ex2, ey2) || 1;
+    const dxn = ex2 / el, dyn = ey2 / el;
+    const px2 = -dyn, py2 = dxn;
+    const eyeOff = z.radius * 0.35;
+    const eyeR = Math.max(1.5, z.radius * 0.18);
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.arc(z.x + dxn * z.radius * 0.4 + px2 * eyeOff, z.y + dyn * z.radius * 0.4 + py2 * eyeOff, eyeR, 0, Math.PI * 2);
+    ctx.arc(z.x + dxn * z.radius * 0.4 - px2 * eyeOff, z.y + dyn * z.radius * 0.4 - py2 * eyeOff, eyeR, 0, Math.PI * 2);
+    ctx.fill();
+    // hp bar
+    if (z.hp < z.maxHp) {
+      const bw = z.radius * 2;
+      const bh = 4;
+      const by = z.y - z.radius - 8;
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(z.x - bw / 2, by, bw, bh);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(z.x - bw / 2, by, bw * (z.hp / z.maxHp), bh);
+    }
+  }
+
+  // Bullets
+  ctx.fillStyle = '#ffeb3b';
+  ctx.shadowColor = '#ffeb3b';
+  ctx.shadowBlur = 8;
+  for (const b of state.bullets) {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // Player
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y + p.radius * 0.8, p.radius * 0.9, p.radius * 0.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.aimAngle);
+  ctx.fillStyle = '#444';
+  ctx.fillRect(p.radius * 0.5, -3, p.radius * 1.2, 6);
+  ctx.fillStyle = '#2196f3';
+  ctx.beginPath();
+  ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#64b5f6';
+  ctx.beginPath();
+  ctx.arc(p.radius * 0.4, 0, p.radius * 0.45, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
-  // زجاج
-  ctx.fillStyle = '#a8dadc';
-  roundRect(car.x + 8, car.y + 14, car.width - 16, 20, 5);
-  ctx.fill();
-  // عجلات
-  ctx.fillStyle = '#000';
-  ctx.fillRect(car.x - 4, car.y + 12, 8, 16);
-  ctx.fillRect(car.x + car.width - 4, car.y + 12, 8, 16);
-  ctx.fillRect(car.x - 4, car.y + 50, 8, 16);
-  ctx.fillRect(car.x + car.width - 4, car.y + 50, 8, 16);
 
-  // العقبات (أحجار)
-  for (const obs of obstacles) {
-    ctx.save();
-    ctx.shadowColor = '#f59e0b';
-    ctx.shadowBlur = 8;
-    ctx.fillStyle = '#f59e0b';
-    roundRect(obs.x, obs.y, obs.width, obs.height, 8);
-    ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = '#7c2d12';
-    ctx.lineWidth = 3;
+  // Particles
+  for (const pt of state.particles) {
+    const a = Math.max(0, pt.life / pt.maxLife);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = pt.color;
     ctx.beginPath();
-    ctx.moveTo(obs.x + 8, obs.y + 8);           ctx.lineTo(obs.x + obs.width - 8, obs.y + obs.height - 8);
-    ctx.moveTo(obs.x + obs.width - 8, obs.y + 8); ctx.lineTo(obs.x + 8, obs.y + obs.height - 8);
-    ctx.stroke();
+    ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+
+  // Damage flash
+  if (state.hitFlash > 0) {
+    const a = state.hitFlash / 0.15 * 0.35;
+    const grad = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.8);
+    grad.addColorStop(0, 'rgba(255,0,0,0)');
+    grad.addColorStop(1, `rgba(255,0,0,${a})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
   }
 
-  // العملات
-  for (const coin of coins) {
-    const cx = coin.x + coin.width / 2;
-    const cy = coin.y + coin.height / 2;
-    const r = coin.width / 2;
-    ctx.save();
-    ctx.shadowColor = '#f5c518';
-    ctx.shadowBlur = 12;
-    const cg = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, r);
-    cg.addColorStop(0, '#fff3a0');
-    cg.addColorStop(1, '#d4a017');
-    ctx.fillStyle = cg;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = '#b8860b';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = '#7c5c00';
-    ctx.font = 'bold 16px Arial';
+  // Level flash
+  if (state.levelFlash > 0) {
+    const a = state.levelFlash / 1.4;
+    ctx.fillStyle = `rgba(245, 197, 24, ${a * 0.18})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#f5c518';
+    ctx.font = 'bold 40px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('$', cx, cy + 1);
+    ctx.fillText(`⚡ المستوى ${state.level}`, W/2, H/2 - 80);
+    ctx.globalAlpha = 1;
+  }
+
+  // Joystick
+  if (joy.active) {
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(joy.baseX, joy.baseY, joy.maxDist, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = '#f5c518';
+    ctx.beginPath();
+    ctx.arc(joy.rx, joy.ry, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
 
-function roundRect(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-// ================== حلقة اللعبة ==================
+// ================= Loop =================
 let lastTime = 0;
-function loop(t) {
-  const dt = t - lastTime;
-  lastTime = t;
-  if (gameState === 'playing') {
-    update(dt);
-    draw();
+function loop(now) {
+  if (!lastTime) lastTime = now;
+  let dt = (now - lastTime) / 1000;
+  lastTime = now;
+  if (dt > 0.05) dt = 0.05;
+
+  if (state.mode === 'playing') update(dt);
+  if (state.mode === 'playing' || state.mode === 'over') {
+    if (state.player) render();
   }
   requestAnimationFrame(loop);
 }
 
-// ================== نهاية اللعبة ==================
-function gameOver() {
-  gameState = 'gameover';
-  if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.notificationOccurred('error'); } catch(e){} }
-  document.getElementById('finalScore').textContent = score;
-  saveLocalScore();
-  renderLocalLeaderboard();
-  document.getElementById('gameOverScreen').classList.add('show');
-}
-
+// ================= Local Leaderboard =================
 function saveLocalScore() {
   try {
-    const key = 'leaderboard_' + (tgChat ? tgChat.id : 'local');
+    const key = 'zlb_' + (tgChat ? tgChat.id : 'local');
     let lb = JSON.parse(localStorage.getItem(key) || '[]');
     const uid = tgUser.id || 0;
-    const existing = lb.find(p => p.id === uid);
-    if (existing) {
-      if (score > existing.score) existing.score = score;
-      existing.name = tgUser.first_name;
+    const idx = lb.findIndex(x => x.id === uid);
+    if (idx >= 0) {
+      if (state.score > lb[idx].score) lb[idx].score = state.score;
+      lb[idx].name = tgUser.first_name || 'لاعب';
     } else {
-      lb.push({ id: uid, name: tgUser.first_name, score });
+      lb.push({ id: uid, name: tgUser.first_name || 'لاعب', score: state.score });
     }
-    lb.sort((a, b) => b.score - a.score);
+    lb.sort((a,b) => b.score - a.score);
     lb = lb.slice(0, 10);
     localStorage.setItem(key, JSON.stringify(lb));
   } catch(e) {}
 }
 
-function renderLocalLeaderboard() {
+function renderLeaderboard() {
   try {
-    const key = 'leaderboard_' + (tgChat ? tgChat.id : 'local');
+    const key = 'zlb_' + (tgChat ? tgChat.id : 'local');
     const lb = JSON.parse(localStorage.getItem(key) || '[]');
-    const list = document.getElementById('leaderboardList');
-    list.innerHTML = '';
-    if (lb.length === 0) {
-      list.innerHTML = '<li style="justify-content:center;color:#888;">لا توجد نتائج بعد</li>';
+    const ul = document.getElementById('leaderboardList');
+    ul.innerHTML = '';
+    if (!lb.length) {
+      ul.innerHTML = '<li style="justify-content:center;color:#888;">لا توجد نتائج بعد</li>';
       return;
     }
+    const uid = tgUser.id || 0;
     lb.forEach((p, i) => {
       const li = document.createElement('li');
-      if (p.id === tgUser.id) li.classList.add('me');
-      li.innerHTML = `<span><span class="rank">${i+1}.</span> ${escapeHtml(p.name)}</span><span class="pts">${p.score}</span>`;
-      list.appendChild(li);
+      if (p.id === uid) li.classList.add('me');
+      li.innerHTML = `<span>${i+1}. ${escapeHtml(p.name)}</span><span class="pts">${p.score}</span>`;
+      ul.appendChild(li);
     });
   } catch(e) {}
 }
@@ -464,50 +723,40 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ================== زر الإرسال للبوت ==================
-document.getElementById('sendScoreBtn').addEventListener('click', () => {
+// ================= UI Events =================
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('startScreen').classList.remove('show');
+  resetGame();
+  lastTime = 0;
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  document.getElementById('gameOverScreen').classList.remove('show');
+  resetGame();
+  lastTime = 0;
+});
+
+document.getElementById('sendBtn').addEventListener('click', () => {
   if (!tg || !tg.sendData) {
-    alert('هذه الميزة تعمل فقط داخل تيليجرام من مجموعة.');
+    alert('هذه الميزة تعمل داخل تيليجرام فقط.');
     return;
   }
   const payload = JSON.stringify({
     action: 'save_score',
-    score: score,
+    score: state.score,
+    kills: state.kills,
+    level: state.level,
     name: tgUser.first_name || 'لاعب',
-    user_id: tgUser.id || 0
+    user_id: tgUser.id || 0,
   });
-  try {
-    tg.sendData(payload);
-    tg.close();
-  } catch(e) {
-    alert('تعذر إرسال النتيجة. تأكد أنك فتحت اللعبة من داخل المجموعة.');
-  }
+  try { tg.sendData(payload); tg.close(); }
+  catch(e) { alert('تعذر الإرسال. افتح اللعبة من داخل المجموعة.'); }
 });
 
-// ================== إعادة اللعب ==================
-document.getElementById('restartBtn').addEventListener('click', () => {
-  score = 0;
-  level = 1;
-  speed = BASE_SPEED;
-  car.lane = 1;
-  obstacles = [];
-  coins = [];
-  gameState = 'playing';
-  gameStartTime = performance.now();
-  document.getElementById('scoreDisplay').textContent = '0';
-  document.getElementById('levelDisplay').textContent = '1';
-  document.getElementById('gameOverScreen').classList.remove('show');
-  resizeCanvas();
-  car.targetX = laneX(car.lane, car.width);
-  car.x = car.targetX;
-});
+// Block context menu / gestures
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault());
 
-// ================== التشغيل ==================
-resizeCanvas();
-car.targetX = laneX(car.lane, car.width);
-car.x = car.targetX;
-car.y = canvasHeight - 110;
-gameStartTime = performance.now();
 requestAnimationFrame(loop);
 </script>
 </body>
