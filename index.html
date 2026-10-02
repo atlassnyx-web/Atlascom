@@ -11,139 +11,44 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
-  html, body {
-    width:100%; height:100%; overflow:hidden;
-    background:#0e1a2b; color:#e8eef5;
-    font-family:'Cairo', Tahoma, sans-serif;
-    touch-action:none;
-  }
+  html, body { width:100%; height:100%; overflow:hidden; background:#0e1a2b; color:#e8eef5; font-family:'Cairo', Tahoma, sans-serif; touch-action:none; }
   #canvas { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
 
-  #hud {
-    position:absolute; top:0; left:0; right:0;
-    padding:12px 16px; pointer-events:none; z-index:5;
-    display:flex; justify-content:space-between; align-items:flex-start;
-  }
-  #title {
-    font-family:'Reem Kufi', 'Cairo', sans-serif;
-    font-size:20px; font-weight:700;
-    color:#f5c518; letter-spacing:1px;
-    text-shadow:0 0 6px rgba(245,197,24,0.5);
-    animation: glow 2.6s ease-in-out infinite alternate;
-    line-height:1.05; text-align:right;
-  }
-  #title small {
-    display:block; font-family:'Cairo', sans-serif;
-    font-size:11px; font-weight:700; color:#8ba7c4;
-    letter-spacing:3px; margin-top:3px;
-    text-shadow:none; animation:none;
-  }
-  @keyframes glow {
-    from { text-shadow:0 0 4px rgba(245,197,24,0.4); opacity:0.95; }
-    to   { text-shadow:0 0 12px rgba(245,197,24,0.85); opacity:1; }
-  }
-  #bestBadge {
-    background:rgba(245,197,24,0.1);
-    border:1px solid rgba(245,197,24,0.3);
-    border-radius:10px;
-    padding:5px 11px;
-    font-size:11px; color:#f5c518; font-weight:700;
-    text-align:center; line-height:1.2;
-  }
+  #hud { position:absolute; top:0; left:0; right:0; padding:12px 16px; pointer-events:none; z-index:5; display:flex; justify-content:space-between; align-items:flex-start; }
+  #title { font-family:'Reem Kufi', sans-serif; font-size:20px; font-weight:700; color:#f5c518; letter-spacing:1px; text-shadow:0 0 6px rgba(245,197,24,0.5); animation:glow 2.6s ease-in-out infinite alternate; line-height:1.05; text-align:right; }
+  #title small { display:block; font-family:'Cairo', sans-serif; font-size:11px; font-weight:700; color:#8ba7c4; letter-spacing:3px; margin-top:3px; text-shadow:none; animation:none; }
+  @keyframes glow { from { text-shadow:0 0 4px rgba(245,197,24,0.4); opacity:0.95; } to { text-shadow:0 0 12px rgba(245,197,24,0.85); opacity:1; } }
+  #bestBadge { background:rgba(245,197,24,0.1); border:1px solid rgba(245,197,24,0.3); border-radius:10px; padding:5px 11px; font-size:11px; color:#f5c518; font-weight:700; text-align:center; line-height:1.2; }
   #bestBadge .v { display:block; font-size:16px; color:#fff; font-weight:800; }
   #bestBadge .l { display:block; font-size:9px; color:#c8b26a; letter-spacing:1px; }
 
-  .overlay {
-    position:absolute; inset:0;
-    display:none; flex-direction:column;
-    justify-content:center; align-items:center;
-    background: radial-gradient(circle at 50% 40%, rgba(14,26,43,0.92), rgba(5,10,18,0.98));
-    z-index:10; padding:22px; text-align:center; overflow-y:auto;
-  }
+  .overlay { position:absolute; inset:0; display:none; flex-direction:column; justify-content:center; align-items:center; background:radial-gradient(circle at 50% 40%, rgba(14,26,43,0.92), rgba(5,10,18,0.98)); z-index:10; padding:22px; text-align:center; overflow-y:auto; }
   .overlay.show { display:flex; }
-
-  .title-main {
-    font-family:'Reem Kufi', 'Cairo', sans-serif;
-    font-size:36px; font-weight:700; letter-spacing:1px;
-    color:#f5c518; margin-bottom:4px; line-height:1.1;
-    text-shadow:0 0 12px rgba(245,197,24,0.55);
-    animation: glow 2.6s ease-in-out infinite alternate;
-  }
-  .title-sub {
-    font-family:'Cairo', sans-serif;
-    font-size:14px; color:#8ba7c4; letter-spacing:6px;
-    margin-bottom:34px; font-weight:700;
-  }
-
-  .btn {
-    font-family:'Cairo', sans-serif;
-    padding:14px 44px; font-size:18px; font-weight:800;
-    background: linear-gradient(180deg, #f5c518, #d4a017);
-    color:#1a1a1a; border:none; border-radius:14px;
-    cursor:pointer; box-shadow: 0 5px 0 #8b6f0f;
-    transition: transform 0.08s;
-    margin:6px 0; letter-spacing:0.4px;
-  }
-  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #8b6f0f; }
-
-  .final-block {
-    display:flex; gap:30px; margin:8px 0 22px;
-    align-items:center; justify-content:center;
-  }
+  .title-main { font-family:'Reem Kufi', sans-serif; font-size:36px; font-weight:700; color:#f5c518; margin-bottom:4px; line-height:1.1; text-shadow:0 0 12px rgba(245,197,24,0.55); animation:glow 2.6s ease-in-out infinite alternate; }
+  .title-sub { font-family:'Cairo', sans-serif; font-size:14px; color:#8ba7c4; letter-spacing:6px; margin-bottom:34px; font-weight:700; }
+  .btn { font-family:'Cairo', sans-serif; padding:14px 44px; font-size:18px; font-weight:800; background:linear-gradient(180deg, #f5c518, #d4a017); color:#1a1a1a; border:none; border-radius:14px; cursor:pointer; box-shadow:0 5px 0 #8b6f0f; transition:transform 0.08s; margin:6px 0; }
+  .btn:active { transform:translateY(4px); box-shadow:0 1px 0 #8b6f0f; }
+  .final-block { display:flex; gap:30px; margin:8px 0 22px; align-items:center; justify-content:center; }
   .final-block .item { text-align:center; }
-  .final-block .lbl {
-    font-size:11px; color:#8ba7c4; font-weight:700;
-    letter-spacing:2px; margin-bottom:4px;
-  }
-  .final-block .val {
-    font-family:'Reem Kufi', 'Cairo', sans-serif;
-    font-size:44px; font-weight:700; color:#f5c518;
-    line-height:1; text-shadow:0 0 16px rgba(245,197,24,0.55);
-  }
+  .final-block .lbl { font-size:11px; color:#8ba7c4; font-weight:700; letter-spacing:2px; margin-bottom:4px; }
+  .final-block .val { font-family:'Reem Kufi', sans-serif; font-size:44px; font-weight:700; color:#f5c518; line-height:1; text-shadow:0 0 16px rgba(245,197,24,0.55); }
   .final-block .val.small { font-size:28px; color:#8bc34a; text-shadow:0 0 12px rgba(139,195,74,0.5); }
-
-  .leaderboard {
-    width:100%; max-width:340px;
-    background: rgba(20,32,48,0.85);
-    border:1px solid rgba(245,197,24,0.2);
-    border-radius:14px;
-    padding:14px; margin-top:12px;
-  }
-  .leaderboard h3 {
-    font-family:'Reem Kufi', 'Cairo', sans-serif;
-    font-size:14px; font-weight:700; color:#f5c518;
-    margin-bottom:10px; letter-spacing:1px;
-  }
+  .leaderboard { width:100%; max-width:340px; background:rgba(20,32,48,0.85); border:1px solid rgba(245,197,24,0.2); border-radius:14px; padding:14px; margin-top:12px; }
+  .leaderboard h3 { font-family:'Reem Kufi', sans-serif; font-size:14px; font-weight:700; color:#f5c518; margin-bottom:10px; letter-spacing:1px; }
   .leaderboard ul { list-style:none; }
-  .leaderboard li {
-    display:flex; justify-content:space-between;
-    padding:7px 10px; font-size:14px; font-weight:600;
-    border-bottom:1px solid rgba(255,255,255,0.05);
-    border-radius:6px;
-  }
+  .leaderboard li { display:flex; justify-content:space-between; padding:7px 10px; font-size:14px; font-weight:600; border-bottom:1px solid rgba(255,255,255,0.05); border-radius:6px; }
   .leaderboard li:last-child { border-bottom:none; }
-  .leaderboard li.me { background: rgba(245,197,24,0.1); }
+  .leaderboard li.me { background:rgba(245,197,24,0.1); }
   .leaderboard li .pts { color:#f5c518; font-weight:800; }
   .leaderboard li .rank { color:#8ba7c4; font-weight:700; margin-left:8px; font-size:13px; }
-
-  .auto-note {
-    font-size:12px; color:#8ba7c4; font-weight:600;
-    margin-top:10px; letter-spacing:0.5px;
-  }
+  .auto-note { font-size:12px; color:#8ba7c4; font-weight:600; margin-top:10px; }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
-
 <div id="hud">
-  <div id="bestBadge">
-    <span class="v" id="hudBest">0</span>
-    <span class="l">أفضل نتيجة</span>
-  </div>
-  <div id="title">
-    فوج النيبة
-    <small>الـطـائـر</small>
-  </div>
+  <div id="bestBadge"><span class="v" id="hudBest">0</span><span class="l">أفضل نتيجة</span></div>
+  <div id="title">فوج النيبة<small>الـطـائـر</small></div>
 </div>
 
 <div class="overlay show" id="startScreen">
@@ -153,19 +58,13 @@
 </div>
 
 <div class="overlay" id="gameOverScreen">
-  <div style="font-family:'Reem Kufi',sans-serif;font-size:26px;font-weight:700;color:#e94560;margin-bottom:8px;letter-spacing:1px;">انتهت اللعبة!</div>
+  <div style="font-family:'Reem Kufi',sans-serif;font-size:26px;font-weight:700;color:#e94560;margin-bottom:8px;">انتهت اللعبة!</div>
   <div class="final-block">
-    <div class="item">
-      <div class="lbl">النقاط</div>
-      <div class="val" id="finalScore">0</div>
-    </div>
-    <div class="item">
-      <div class="lbl">المستوى</div>
-      <div class="val small" id="finalLevel">1</div>
-    </div>
+    <div class="item"><div class="lbl">النقاط</div><div class="val" id="finalScore">0</div></div>
+    <div class="item"><div class="lbl">المستوى</div><div class="val small" id="finalLevel">1</div></div>
   </div>
   <button class="btn" id="restartBtn">🔄 العب مرة أخرى</button>
-  <div class="auto-note" id="autoNote">📤 جاري إرسال نتيجتك للمجموعة...</div>
+  <div class="auto-note" id="autoNote"></div>
   <div class="leaderboard">
     <h3>🏆 أفضل اللاعبين في هذه المجموعة</h3>
     <ul id="leaderboardList"></ul>
@@ -173,590 +72,302 @@
 </div>
 
 <script>
-// ============ Telegram ============
+// ==================== الإعدادات ====================
+// ⚠️ بدّل هذا برابط سيرفرك على Render بعد ما ترفعه
+const API_URL = "https://neba-bot.onrender.com";
+// =================================================
+
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  try { tg.expand(); tg.ready(); tg.setHeaderColor('#0e1a2b'); tg.setBackgroundColor('#0e1a2b'); } catch(e){}
-}
+if (tg) { try { tg.expand(); tg.ready(); tg.setHeaderColor('#0e1a2b'); tg.setBackgroundColor('#0e1a2b'); } catch(e){} }
 const tgUser = tg?.initDataUnsafe?.user || { first_name: 'لاعب', id: 0 };
 const tgChat = tg?.initDataUnsafe?.chat || null;
 
-// ============ Audio ============
+// Audio
 let audioCtx = null;
-function initAudio() {
-  if (audioCtx) return;
-  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-  catch(e) { audioCtx = null; }
-}
+function initAudio() { if (audioCtx) return; try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { audioCtx = null; } }
 function tone({ freq=440, type='sine', dur=0.1, vol=0.1, sweepTo=null } = {}) {
   if (!audioCtx) return;
-  const t = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, t);
+  const t = audioCtx.currentTime, osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+  osc.type = type; osc.frequency.setValueAtTime(freq, t);
   if (sweepTo) osc.frequency.exponentialRampToValueAtTime(sweepTo, t + dur);
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  osc.connect(g).connect(audioCtx.destination);
-  osc.start(t);
-  osc.stop(t + dur + 0.02);
+  osc.connect(g).connect(audioCtx.destination); osc.start(t); osc.stop(t + dur + 0.02);
 }
-function sfxFlap()   { tone({ freq: 520, sweepTo: 340, type: 'sine',     dur: 0.09, vol: 0.09 }); }
-function sfxScore()  {
-  tone({ freq: 720, type: 'triangle', dur: 0.07, vol: 0.09 });
-  setTimeout(() => tone({ freq: 980, type: 'triangle', dur: 0.09, vol: 0.09 }), 55);
-}
-function sfxHit() {
-  tone({ freq: 180, sweepTo: 55, type: 'triangle', dur: 0.28, vol: 0.12 });
-  tone({ freq: 110, sweepTo: 40, type: 'sine',     dur: 0.35, vol: 0.09 });
-}
-function sfxLevelUp() {
-  tone({ freq: 620,  type: 'triangle', dur: 0.08, vol: 0.09 });
-  setTimeout(() => tone({ freq: 820,  type: 'triangle', dur: 0.08, vol: 0.09 }), 70);
-  setTimeout(() => tone({ freq: 1080, type: 'triangle', dur: 0.13, vol: 0.09 }), 145);
-}
+function sfxFlap()   { tone({ freq:520, sweepTo:340, type:'sine', dur:0.09, vol:0.09 }); }
+function sfxScore()  { tone({ freq:720, type:'triangle', dur:0.07, vol:0.09 }); setTimeout(()=>tone({freq:980,type:'triangle',dur:0.09,vol:0.09}),55); }
+function sfxHit()    { tone({ freq:180, sweepTo:55, type:'triangle', dur:0.28, vol:0.12 }); tone({ freq:110, sweepTo:40, type:'sine', dur:0.35, vol:0.09 }); }
+function sfxLevelUp(){ tone({freq:620,type:'triangle',dur:0.08,vol:0.09}); setTimeout(()=>tone({freq:820,type:'triangle',dur:0.08,vol:0.09}),70); setTimeout(()=>tone({freq:1080,type:'triangle',dur:0.13,vol:0.09}),145); }
 
-// ============ Canvas ============
+// Canvas
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { alpha: false });
-
-const REF_W = 420;
-const REF_H = 700;
-const MAX_PIXELS = 1_300_000;   // سقف البكسل لضمان أداء سلس على أي جهاز
-
-let W = 0, H = 0, DPR = 1;
-let scale = 1;
-let playLeft = 0, playRight = 0, playW = 0;
-let bgCache = null;
-let birdGlowCache = null;
+const REF_W = 420, REF_H = 700, MAX_PIXELS = 1_300_000;
+let W = 0, H = 0, DPR = 1, scale = 1, playLeft = 0, playRight = 0, playW = 0;
+let bgCache = null, birdGlowCache = null;
 
 function computeLayout() {
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth;
-  H = window.innerHeight;
-
-  // ===== سقف البكسل — هذا هو الحل الأهم للاق =====
-  if (W * H * dpr * dpr > MAX_PIXELS) {
-    dpr = Math.sqrt(MAX_PIXELS / (W * H));
-  }
+  W = window.innerWidth; H = window.innerHeight;
+  if (W * H * dpr * dpr > MAX_PIXELS) dpr = Math.sqrt(MAX_PIXELS / (W * H));
   dpr = Math.max(0.75, dpr);
   DPR = dpr;
-
-  canvas.width  = Math.floor(W * DPR);
-  canvas.height = Math.floor(H * DPR);
-  canvas.style.width  = W + 'px';
-  canvas.style.height = H + 'px';
+  canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.imageSmoothingEnabled = true;
-
   scale = H / REF_H;
-
   const idealPlayW = REF_W * scale;
-  if (W > idealPlayW) {
-    playW = idealPlayW;
-    playLeft = (W - idealPlayW) / 2;
-    playRight = playLeft + idealPlayW;
-  } else {
-    playLeft = 0;
-    playW = W;
-    playRight = W;
-  }
-
-  buildBackgroundCache();
-  buildBirdGlowCache();
+  if (W > idealPlayW) { playW = idealPlayW; playLeft = (W - idealPlayW) / 2; playRight = playLeft + idealPlayW; }
+  else { playLeft = 0; playW = W; playRight = W; }
+  buildBackgroundCache(); buildBirdGlowCache();
   if (state.bird) repositionBird();
 }
 
 function buildBackgroundCache() {
   bgCache = document.createElement('canvas');
-  bgCache.width = canvas.width;
-  bgCache.height = canvas.height;
+  bgCache.width = canvas.width; bgCache.height = canvas.height;
   const b = bgCache.getContext('2d');
   b.setTransform(DPR, 0, 0, DPR, 0, 0);
-
   const sky = b.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0.00, '#0e1a2b');
-  sky.addColorStop(0.45, '#182a44');
-  sky.addColorStop(0.72, '#3a4a6b');
-  sky.addColorStop(0.90, '#c96466');
+  sky.addColorStop(0.00, '#0e1a2b'); sky.addColorStop(0.45, '#182a44');
+  sky.addColorStop(0.72, '#3a4a6b'); sky.addColorStop(0.90, '#c96466');
   sky.addColorStop(1.00, '#f0a15f');
-  b.fillStyle = sky;
-  b.fillRect(0, 0, W, H);
-
+  b.fillStyle = sky; b.fillRect(0, 0, W, H);
   b.fillStyle = '#ffffff';
   for (let i = 0; i < 18; i++) {
     b.globalAlpha = 0.3 + Math.random() * 0.5;
     const r = Math.random() * 1.2 + 0.4;
-    b.beginPath();
-    b.arc(Math.random() * W, Math.random() * H * 0.5, r, 0, Math.PI * 2);
-    b.fill();
+    b.beginPath(); b.arc(Math.random() * W, Math.random() * H * 0.5, r, 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-
   const sunX = W * 0.78, sunY = H * 0.6, sunR = 60 * scale;
   const sg = b.createRadialGradient(sunX, sunY, 2, sunX, sunY, sunR * 2.2);
   sg.addColorStop(0, 'rgba(255,225,160,0.7)');
   sg.addColorStop(0.35, 'rgba(255,180,100,0.28)');
   sg.addColorStop(1, 'rgba(255,140,80,0)');
-  b.fillStyle = sg;
-  b.beginPath();
-  b.arc(sunX, sunY, sunR * 2.2, 0, Math.PI * 2);
-  b.fill();
-  b.fillStyle = 'rgba(255,238,205,0.95)';
-  b.beginPath();
-  b.arc(sunX, sunY, sunR * 0.45, 0, Math.PI * 2);
-  b.fill();
-
-  // Side vignettes on wide screens
+  b.fillStyle = sg; b.beginPath(); b.arc(sunX, sunY, sunR * 2.2, 0, Math.PI * 2); b.fill();
+  b.fillStyle = 'rgba(255,238,205,0.95)'; b.beginPath(); b.arc(sunX, sunY, sunR * 0.45, 0, Math.PI * 2); b.fill();
   if (playLeft > 4) {
-    const lg = b.createLinearGradient(0, 0, playLeft, 0);
-    lg.addColorStop(0, 'rgba(0,0,0,0.5)');
-    lg.addColorStop(1, 'rgba(0,0,0,0)');
-    b.fillStyle = lg;
-    b.fillRect(0, 0, playLeft, H);
-
-    const rg = b.createLinearGradient(W, 0, playRight, 0);
-    rg.addColorStop(0, 'rgba(0,0,0,0.5)');
-    rg.addColorStop(1, 'rgba(0,0,0,0)');
-    b.fillStyle = rg;
-    b.fillRect(playRight, 0, W - playRight, H);
+    let lg = b.createLinearGradient(0, 0, playLeft, 0);
+    lg.addColorStop(0, 'rgba(0,0,0,0.5)'); lg.addColorStop(1, 'rgba(0,0,0,0)');
+    b.fillStyle = lg; b.fillRect(0, 0, playLeft, H);
+    let rg = b.createLinearGradient(W, 0, playRight, 0);
+    rg.addColorStop(0, 'rgba(0,0,0,0.5)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    b.fillStyle = rg; b.fillRect(playRight, 0, W - playRight, H);
   }
 }
 
-// Bird glow is a circle, so we cache it as a small image
 function buildBirdGlowCache() {
   birdGlowCache = document.createElement('canvas');
-  const gs = 128;
-  birdGlowCache.width = gs;
-  birdGlowCache.height = gs;
+  const gs = 128; birdGlowCache.width = gs; birdGlowCache.height = gs;
   const gCtx = birdGlowCache.getContext('2d');
   const grad = gCtx.createRadialGradient(gs/2, gs/2, gs*0.25, gs/2, gs/2, gs/2);
   grad.addColorStop(0, 'rgba(245,197,24,0.55)');
   grad.addColorStop(0.7, 'rgba(245,197,24,0.18)');
   grad.addColorStop(1, 'rgba(245,197,24,0)');
-  gCtx.fillStyle = grad;
-  gCtx.fillRect(0, 0, gs, gs);
+  gCtx.fillStyle = grad; gCtx.fillRect(0, 0, gs, gs);
 }
-
 window.addEventListener('resize', computeLayout);
 
-// ============ Constants ============
-const GRAVITY    = 980;
-const FLAP_VY    = -400;
-const MAX_FALL   = 680;
-const BASE_SPEED = 215;
-const MAX_SPEED  = 340;
-const PIPE_W     = 66;
-const PIPE_CAP_H = 24;
-const BASE_GAP   = 200;
-const MIN_GAP    = 145;
-const GROUND_H   = 90;
-const BIRD_X_FRAC = 0.30;
-const BASE_INTERVAL = 1.55;
-const MIN_INTERVAL  = 1.02;
+// Constants
+const GRAVITY = 980, FLAP_VY = -400, MAX_FALL = 680;
+const BASE_SPEED = 215, MAX_SPEED = 340;
+const PIPE_W = 66, PIPE_CAP_H = 24, BASE_GAP = 200, MIN_GAP = 145;
+const GROUND_H = 90, BIRD_X_FRAC = 0.30;
+const BASE_INTERVAL = 1.35, MIN_INTERVAL = 0.95;
 
-// ============ State ============
 const state = {
-  mode: 'menu',
-  score: 0,
-  level: 1,
-  best: 0,
-  t: 0,
-  bird: null,
-  pipes: [],
-  clouds: [],
-  groundOffset: 0,
-  spawnTimer: 0,
-  shake: 0,
-  hitFlash: 0,
-  levelFlash: 0,
-  scorePop: 0,
+  mode: 'menu', score: 0, level: 1, best: 0, t: 0,
+  bird: null, pipes: [], clouds: [], groundOffset: 0,
+  spawnTimer: 0, shake: 0, hitFlash: 0, levelFlash: 0, scorePop: 0,
 };
+let scoreSubmitted = false;
 
-let autoSendTimer = null;
-
-function repositionBird() {
-  if (!state.bird) return;
-  state.bird.x = playLeft + playW * BIRD_X_FRAC;
-  state.bird.r = 15 * scale;
-}
+function repositionBird() { if (!state.bird) return; state.bird.x = playLeft + playW * BIRD_X_FRAC; state.bird.r = 15 * scale; }
 
 function resetGame() {
-  state.mode = 'playing';
-  state.score = 0;
-  state.level = 1;
-  state.t = 0;
-  state.pipes.length = 0;
-  state.groundOffset = 0;
-  state.spawnTimer = 1.0;
-  state.shake = 0;
-  state.hitFlash = 0;
-  state.levelFlash = 0;
-  state.scorePop = 0;
-
-  state.bird = {
-    x: playLeft + playW * BIRD_X_FRAC,
-    y: H * 0.42,
-    vy: 0,
-    r: 15 * scale,
-    rot: 0,
-    wing: 0,
-    alive: true,
-  };
+  state.mode = 'playing'; state.score = 0; state.level = 1; state.t = 0;
+  state.pipes.length = 0; state.groundOffset = 0; state.spawnTimer = 0.6;
+  state.shake = 0; state.hitFlash = 0; state.levelFlash = 0; state.scorePop = 0;
+  scoreSubmitted = false;
+  state.bird = { x: playLeft + playW * BIRD_X_FRAC, y: H * 0.42, vy: 0, r: 15 * scale, rot: 0, wing: 0, alive: true };
 }
 
 function initClouds() {
   state.clouds.length = 0;
   for (let i = 0; i < 2; i++) {
-    state.clouds.push({
-      x: Math.random() * W,
-      y: 60 * scale + Math.random() * H * 0.3,
-      s: 0.7 + Math.random() * 0.6,
-      sp: 8 + Math.random() * 10,
-      a: 0.3 + Math.random() * 0.3,
-    });
+    state.clouds.push({ x: Math.random() * W, y: 60 * scale + Math.random() * H * 0.3, s: 0.7 + Math.random() * 0.6, sp: 8 + Math.random() * 10, a: 0.3 + Math.random() * 0.3 });
   }
 }
 
-// ============ Input ============
 function flap() {
   if (state.mode === 'menu') { startGame(); return; }
   if (state.mode !== 'playing' || !state.bird) return;
-  state.bird.vy = FLAP_VY * scale;
-  state.bird.wing = 1;
+  state.bird.vy = FLAP_VY * scale; state.bird.wing = 1;
   sfxFlap();
   if (tg?.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('light'); } catch(e){} }
 }
-canvas.addEventListener('pointerdown', (e) => {
-  e.preventDefault();
-  if (state.mode === 'playing') flap();
-});
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); flap(); }
-});
+canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); if (state.mode === 'playing') flap(); });
+window.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); flap(); } });
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault());
 
-// ============ Pipes ============
 function spawnPipe() {
   const gapH = Math.max(MIN_GAP * scale, (BASE_GAP - (state.level - 1) * 7) * scale);
   const margin = 50 * scale;
-  const minY = margin + gapH / 2;
-  const maxY = H - GROUND_H * scale - margin - gapH / 2;
+  const minY = margin + gapH / 2, maxY = H - GROUND_H * scale - margin - gapH / 2;
   const gapY = minY + Math.random() * Math.max(1, (maxY - minY));
-  // تطلع من حافة الشاشة اليمنى
-  state.pipes.push({
-    x: W + PIPE_W * scale,
-    gapY, gapH, passed: false,
-  });
+  state.pipes.push({ x: W + PIPE_W * scale, gapY, gapH, passed: false });
 }
 
-// ============ Update ============
 function update(dt) {
   if (state.mode !== 'playing') return;
   state.t += dt;
-
   state.level = Math.floor(state.score / 5) + 1;
   const speed = Math.min(MAX_SPEED, BASE_SPEED + (state.level - 1) * 12) * scale;
   const interval = Math.max(MIN_INTERVAL, BASE_INTERVAL - (state.level - 1) * 0.07);
-
   const b = state.bird;
   b.vy += GRAVITY * scale * dt;
   if (b.vy > MAX_FALL * scale) b.vy = MAX_FALL * scale;
   b.y += b.vy * dt;
-
   const targetRot = Math.max(-0.45, Math.min(1.1, b.vy / (700 * scale)));
   b.rot += (targetRot - b.rot) * Math.min(1, dt * 9);
-
   if (b.wing > 0) b.wing = Math.max(0, b.wing - dt * 3);
-
   if (b.y - b.r < 0) { b.y = b.r; b.vy = 0; }
-
   const gy = H - GROUND_H * scale;
   if (b.y + b.r >= gy) { b.y = gy - b.r; gameOver(); return; }
-
   state.groundOffset += speed * dt;
   if (state.groundOffset > 60 * scale) state.groundOffset -= 60 * scale;
-
   state.spawnTimer -= dt;
-  if (state.spawnTimer <= 0) {
-    state.spawnTimer = interval;
-    spawnPipe();
-  }
-
+  if (state.spawnTimer <= 0) { state.spawnTimer = interval; spawnPipe(); }
   const pipeW = PIPE_W * scale;
   for (let i = state.pipes.length - 1; i >= 0; i--) {
     const p = state.pipes[i];
     p.x -= speed * dt;
-
-    // تختفي بس لما تطلع من الحافة اليسرى للشاشة
     if (p.x + pipeW < -10) { state.pipes.splice(i, 1); continue; }
-
-    const bx1 = b.x - b.r * 0.85, bx2 = b.x + b.r * 0.85;
-    const by1 = b.y - b.r * 0.85, by2 = b.y + b.r * 0.85;
-    const pL = p.x, pR = p.x + pipeW;
-    const pTopB = p.gapY - p.gapH / 2;
-    const pBotT = p.gapY + p.gapH / 2;
-
-    if (bx2 > pL && bx1 < pR) {
-      if (by1 < pTopB) { gameOver(); return; }
-      if (by2 > pBotT) { gameOver(); return; }
-    }
-
+    const bx1 = b.x - b.r * 0.85, bx2 = b.x + b.r * 0.85, by1 = b.y - b.r * 0.85, by2 = b.y + b.r * 0.85;
+    const pL = p.x, pR = p.x + pipeW, pTopB = p.gapY - p.gapH / 2, pBotT = p.gapY + p.gapH / 2;
+    if (bx2 > pL && bx1 < pR) { if (by1 < pTopB) { gameOver(); return; } if (by2 > pBotT) { gameOver(); return; } }
     if (!p.passed && pR < b.x - b.r) {
-      p.passed = true;
-      state.score++;
-      state.scorePop = 0.3;
-      sfxScore();
+      p.passed = true; state.score++; state.scorePop = 0.3; sfxScore();
       if (tg?.HapticFeedback) { try { tg.HapticFeedback.selectionChanged(); } catch(e){} }
-      if (state.score % 5 === 0) {
-        state.levelFlash = 1.3;
-        sfxLevelUp();
-        if (tg?.HapticFeedback) { try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){} }
-      }
+      if (state.score % 5 === 0) { state.levelFlash = 1.3; sfxLevelUp(); if (tg?.HapticFeedback) { try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){} } }
     }
   }
-
-  for (const c of state.clouds) {
-    c.x -= c.sp * dt;
-    if (c.x < -140) {
-      c.x = W + 60;
-      c.y = 60 * scale + Math.random() * H * 0.3;
-    }
-  }
-
+  for (const c of state.clouds) { c.x -= c.sp * dt; if (c.x < -140) { c.x = W + 60; c.y = 60 * scale + Math.random() * H * 0.3; } }
   if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 55);
   if (state.hitFlash > 0) state.hitFlash -= dt;
   if (state.levelFlash > 0) state.levelFlash -= dt;
   if (state.scorePop > 0) state.scorePop -= dt;
 }
 
-// ============ Render ============
 function render() {
   const shX = state.shake > 0 ? (Math.random() - 0.5) * state.shake : 0;
   const shY = state.shake > 0 ? (Math.random() - 0.5) * state.shake : 0;
-
   if (bgCache) ctx.drawImage(bgCache, 0, 0, W, H);
-
-  ctx.save();
-  ctx.translate(shX, shY);
-
+  ctx.save(); ctx.translate(shX, shY);
   for (const c of state.clouds) drawCloud(c.x, c.y, c.s, c.a);
   drawHills();
   for (let i = 0; i < state.pipes.length; i++) drawPipe(state.pipes[i]);
   drawGround();
   if (state.bird) drawBird(state.bird);
-
   if (state.mode === 'playing') {
     const pop = state.scorePop > 0 ? 1 + state.scorePop * 0.5 : 1;
-    ctx.save();
-    ctx.translate(W / 2, 120 * scale);
-    ctx.scale(pop, pop);
+    ctx.save(); ctx.translate(W / 2, 120 * scale); ctx.scale(pop, pop);
     ctx.font = `700 ${58 * scale}px "Reem Kufi", "Cairo", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillText(state.score, 2, 3);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(state.score, 0, 0);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillText(state.score, 2, 3);
+    ctx.fillStyle = '#ffffff'; ctx.fillText(state.score, 0, 0);
     ctx.restore();
   }
-
-  if (state.hitFlash > 0) {
-    ctx.fillStyle = `rgba(233,69,96,${(state.hitFlash / 0.4) * 0.5})`;
-    ctx.fillRect(0, 0, W, H);
-  }
-
+  if (state.hitFlash > 0) { ctx.fillStyle = `rgba(233,69,96,${(state.hitFlash / 0.4) * 0.5})`; ctx.fillRect(0, 0, W, H); }
   if (state.levelFlash > 0) {
     const a = state.levelFlash / 1.3;
-    ctx.fillStyle = `rgba(245,197,24,${a * 0.15})`;
-    ctx.fillRect(0, 0, W, H);
-    ctx.globalAlpha = a;
-    ctx.fillStyle = '#f5c518';
+    ctx.fillStyle = `rgba(245,197,24,${a * 0.15})`; ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = a; ctx.fillStyle = '#f5c518';
     ctx.font = `700 ${34 * scale}px "Reem Kufi", "Cairo", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(`⚡ المستوى ${state.level}`, W / 2, H * 0.30);
     ctx.globalAlpha = 1;
   }
-
   if (state.mode === 'menu') {
     const pulse = 0.5 + 0.5 * Math.sin(state.t * 2.4);
-    ctx.globalAlpha = 0.5 + pulse * 0.4;
-    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.5 + pulse * 0.4; ctx.fillStyle = '#ffffff';
     ctx.font = `600 ${14 * scale}px "Cairo", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('اضغط لتبدأ', W / 2, H - GROUND_H * scale - 40 * scale);
     ctx.globalAlpha = 1;
   }
-
   ctx.restore();
 }
 
-// ============ Drawing ============
 function drawCloud(x, y, s, a) {
-  ctx.globalAlpha = a;
-  ctx.fillStyle = '#dfe9f3';
+  ctx.globalAlpha = a; ctx.fillStyle = '#dfe9f3';
   const r = 20 * s * scale;
   ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.arc(x + r * 0.9, y + r * 0.15, r * 0.8, 0, Math.PI * 2);
-  ctx.arc(x - r * 0.85, y + r * 0.2, r * 0.7, 0, Math.PI * 2);
-  ctx.arc(x + r * 1.6, y + r * 0.35, r * 0.55, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
+  ctx.arc(x, y, r, 0, Math.PI * 2); ctx.arc(x + r * 0.9, y + r * 0.15, r * 0.8, 0, Math.PI * 2);
+  ctx.arc(x - r * 0.85, y + r * 0.2, r * 0.7, 0, Math.PI * 2); ctx.arc(x + r * 1.6, y + r * 0.35, r * 0.55, 0, Math.PI * 2);
+  ctx.fill(); ctx.globalAlpha = 1;
 }
-
 function drawHills() {
   const baseY = H - GROUND_H * scale + 8 * scale;
-  ctx.fillStyle = '#243b55';
-  ctx.beginPath();
-  ctx.moveTo(0, baseY);
-  const step = W / 6;
-  const off = (state.groundOffset * 0.005) % 2;
-  for (let i = 0; i <= 6; i++) {
-    const h = 40 * scale + Math.sin((i + off) * 1.7) * 28 * scale;
-    ctx.lineTo(i * step, baseY - h);
-  }
-  ctx.lineTo(W, baseY);
-  ctx.closePath();
-  ctx.fill();
+  ctx.fillStyle = '#243b55'; ctx.beginPath(); ctx.moveTo(0, baseY);
+  const step = W / 6, off = (state.groundOffset * 0.005) % 2;
+  for (let i = 0; i <= 6; i++) { const h = 40 * scale + Math.sin((i + off) * 1.7) * 28 * scale; ctx.lineTo(i * step, baseY - h); }
+  ctx.lineTo(W, baseY); ctx.closePath(); ctx.fill();
 }
-
 function drawGround() {
   const gy = H - GROUND_H * scale;
-  ctx.fillStyle = '#2c2118';
-  ctx.fillRect(0, gy, W, GROUND_H * scale);
-  ctx.fillStyle = '#c8a86b';
-  ctx.fillRect(0, gy, W, 5 * scale);
-  ctx.fillStyle = '#8a7043';
-  ctx.fillRect(0, gy + 5 * scale, W, 3 * scale);
-
-  const sw = 32 * scale;
-  const off = state.groundOffset % sw;
+  ctx.fillStyle = '#2c2118'; ctx.fillRect(0, gy, W, GROUND_H * scale);
+  ctx.fillStyle = '#c8a86b'; ctx.fillRect(0, gy, W, 5 * scale);
+  ctx.fillStyle = '#8a7043'; ctx.fillRect(0, gy + 5 * scale, W, 3 * scale);
+  const sw = 32 * scale, off = state.groundOffset % sw;
   ctx.fillStyle = '#3a2c1e';
-  for (let x = -sw + off; x < W; x += sw) {
-    ctx.fillRect(x, gy + 12 * scale, 3 * scale, GROUND_H * scale - 12 * scale);
-  }
-  ctx.fillStyle = '#f5c518';
-  ctx.fillRect(0, gy - 1, W, 1);
+  for (let x = -sw + off; x < W; x += sw) ctx.fillRect(x, gy + 12 * scale, 3 * scale, GROUND_H * scale - 12 * scale);
+  ctx.fillStyle = '#f5c518'; ctx.fillRect(0, gy - 1, W, 1);
 }
-
-// **مبسط جداً للأداء** — كان ~12 عملية، الآن ~5
 function drawPipe(p) {
-  const pw = PIPE_W * scale;
-  const capH = PIPE_CAP_H * scale;
-  const oh = 5 * scale;
-  const pTopB = p.gapY - p.gapH / 2;
-  const pBotT = p.gapY + p.gapH / 2;
-
-  // جسم الأنبوب العلوي (لون واحد)
-  ctx.fillStyle = '#2e7d32';
-  ctx.fillRect(p.x, 0, pw, pTopB - capH);
-
-  // كاب علوي
+  const pw = PIPE_W * scale, capH = PIPE_CAP_H * scale, oh = 5 * scale;
+  const pTopB = p.gapY - p.gapH / 2, pBotT = p.gapY + p.gapH / 2;
+  ctx.fillStyle = '#2e7d32'; ctx.fillRect(p.x, 0, pw, pTopB - capH);
   ctx.fillRect(p.x - oh, pTopB - capH, pw + oh * 2, capH);
-  ctx.fillStyle = '#8bc34a';
-  ctx.fillRect(p.x - oh, pTopB - capH + capH * 0.15, pw + oh * 2, capH * 0.12);
-
-  // كاب سفلي
+  ctx.fillStyle = '#8bc34a'; ctx.fillRect(p.x - oh, pTopB - capH + capH * 0.15, pw + oh * 2, capH * 0.12);
+  ctx.fillStyle = '#2e7d32'; ctx.fillRect(p.x - oh, pBotT, pw + oh * 2, capH);
+  ctx.fillStyle = '#8bc34a'; ctx.fillRect(p.x - oh, pBotT + capH * 0.73, pw + oh * 2, capH * 0.12);
   ctx.fillStyle = '#2e7d32';
-  ctx.fillRect(p.x - oh, pBotT, pw + oh * 2, capH);
-  ctx.fillStyle = '#8bc34a';
-  ctx.fillRect(p.x - oh, pBotT + capH * 0.73, pw + oh * 2, capH * 0.12);
-
-  // جسم الأنبوب السفلي
-  ctx.fillStyle = '#2e7d32';
-  const botY = pBotT + capH;
-  const botH = H - GROUND_H * scale - botY;
+  const botY = pBotT + capH, botH = H - GROUND_H * scale - botY;
   if (botH > 0) ctx.fillRect(p.x, botY, pw, botH);
 }
-
 function drawBird(b) {
   const gy = H - GROUND_H * scale;
-  const dist = Math.max(0, gy - b.y);
-  const maxDist = H * 0.7;
+  const dist = Math.max(0, gy - b.y), maxDist = H * 0.7;
   const a = Math.max(0, 0.3 * (1 - dist / maxDist));
   if (a > 0.02) {
-    ctx.globalAlpha = a;
-    ctx.fillStyle = '#000';
+    ctx.globalAlpha = a; ctx.fillStyle = '#000';
     const s = Math.max(0.4, 1 - dist / maxDist * 0.6);
-    ctx.beginPath();
-    ctx.ellipse(b.x + 3, gy + 4, b.r * 1.05 * s, b.r * 0.38 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(b.x + 3, gy + 4, b.r * 1.05 * s, b.r * 0.38 * s, 0, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
   }
-
   const r = b.r;
-
-  // التوهج (صورة جاهزة — بدون إنشاء كل فريم)
-  if (birdGlowCache) {
-    ctx.drawImage(birdGlowCache, b.x - r * 1.9, b.y - r * 1.9, r * 3.8, r * 3.8);
-  }
-
-  ctx.save();
-  ctx.translate(b.x, b.y);
-  ctx.rotate(b.rot);
-
-  // الجسم
-  ctx.fillStyle = '#f5c518';
-  ctx.beginPath();
-  ctx.arc(0, 0, r, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#fff5b8';
-  ctx.beginPath();
-  ctx.ellipse(-r * 0.15, -r * 0.25, r * 0.55, r * 0.4, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // العين
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(r * 0.38, -r * 0.35, r * 0.32, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#111';
-  ctx.beginPath();
-  ctx.arc(r * 0.48, -r * 0.35, r * 0.15, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(r * 0.53, -r * 0.42, r * 0.05, 0, Math.PI * 2);
-  ctx.fill();
-
-  // المنقار
-  ctx.fillStyle = '#ff8c00';
-  ctx.beginPath();
-  ctx.moveTo(r * 0.82, -r * 0.05);
-  ctx.lineTo(r * 1.45, r * 0.05);
-  ctx.lineTo(r * 0.82, r * 0.24);
-  ctx.closePath();
-  ctx.fill();
-
-  // الجنح
+  if (birdGlowCache) ctx.drawImage(birdGlowCache, b.x - r * 1.9, b.y - r * 1.9, r * 3.8, r * 3.8);
+  ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+  ctx.fillStyle = '#f5c518'; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff5b8'; ctx.beginPath(); ctx.ellipse(-r * 0.15, -r * 0.25, r * 0.55, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(r * 0.38, -r * 0.35, r * 0.32, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(r * 0.48, -r * 0.35, r * 0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(r * 0.53, -r * 0.42, r * 0.05, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ff8c00'; ctx.beginPath(); ctx.moveTo(r * 0.82, -r * 0.05); ctx.lineTo(r * 1.45, r * 0.05); ctx.lineTo(r * 0.82, r * 0.24); ctx.closePath(); ctx.fill();
   const wingAngle = -0.6 + b.wing * 1.2;
-  ctx.save();
-  ctx.translate(-r * 0.15, r * 0.05);
-  ctx.rotate(wingAngle);
-  ctx.fillStyle = '#d4a017';
-  ctx.beginPath();
-  ctx.ellipse(-r * 0.5, 0, r * 0.72, r * 0.4, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.restore();
+  ctx.save(); ctx.translate(-r * 0.15, r * 0.05); ctx.rotate(wingAngle);
+  ctx.fillStyle = '#d4a017'; ctx.beginPath(); ctx.ellipse(-r * 0.5, 0, r * 0.72, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore(); ctx.restore();
 }
 
-// ============ HUD ============
-function updateBestBadge() {
-  document.getElementById('hudBest').textContent = state.best;
-}
+function updateBestBadge() { document.getElementById('hudBest').textContent = state.best; }
 
-// ============ Flow ============
 function startGame() {
-  if (autoSendTimer) { clearTimeout(autoSendTimer); autoSendTimer = null; }
   initAudio();
   if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch(e){} }
   document.getElementById('startScreen').classList.remove('show');
@@ -768,46 +379,73 @@ function startGame() {
 
 function gameOver() {
   state.mode = 'over';
-  state.shake = 14 * scale;
-  state.hitFlash = 0.4;
+  state.shake = 14 * scale; state.hitFlash = 0.4;
   sfxHit();
   if (tg?.HapticFeedback) { try { tg.HapticFeedback.notificationOccurred('error'); } catch(e){} }
-
   if (state.score > state.best) state.best = state.score;
-  saveLocalScore();
-  updateBestBadge();
+  saveLocalScore(); updateBestBadge();
   try { localStorage.setItem('neba_best', String(state.best)); } catch(e){}
-
   document.getElementById('finalScore').textContent = state.score;
   document.getElementById('finalLevel').textContent = state.level;
   renderLeaderboard();
   document.getElementById('gameOverScreen').classList.add('show');
-
-  const note = document.getElementById('autoNote');
-  if (tg && tg.sendData) {
-    note.textContent = '📤 جاري إرسال نتيجتك للمجموعة...';
-    autoSendTimer = setTimeout(() => {
-      autoSendTimer = null;
-      sendScoreToBot();
-    }, 2000);
-  } else {
-    note.textContent = 'النتيجة محفوظة محلياً';
+  // إرسال تلقائي للسيرفر
+  if (!scoreSubmitted) {
+    scoreSubmitted = true;
+    setTimeout(submitScore, 1200);
   }
 }
 
-function sendScoreToBot() {
-  if (!tg || !tg.sendData) return;
-  const payload = JSON.stringify({
-    action: 'save_score',
+async function submitScore() {
+  const note = document.getElementById('autoNote');
+  if (!tgChat || !tgChat.id) {
+    note.textContent = '📌 العب من داخل المجموعة لتسجيل نتيجتك';
+    return;
+  }
+  note.textContent = '📤 جاري الإرسال...';
+  const body = {
+    chat_id: tgChat.id,
+    user_id: tgUser.id || 0,
+    name: tgUser.first_name || 'لاعب',
     score: state.score,
     level: state.level,
-    name: tgUser.first_name || 'لاعب',
-    user_id: tgUser.id || 0,
-  });
-  try { tg.sendData(payload); } catch(e) {}
+    init_data: tg.initData || ''
+  };
+  try {
+    const res = await fetch(API_URL + '/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      note.textContent = `✅ تم إرسال نتيجتك (مركزك: ${data.rank})`;
+      if (data.leaderboard) renderServerLeaderboard(data.leaderboard);
+    } else {
+      note.textContent = '⚠️ تعذر الإرسال';
+    }
+  } catch(e) {
+    note.textContent = '⚠️ تعذر الاتصال بالسيرفر';
+  }
 }
 
-// ============ Leaderboard ============
+function renderServerLeaderboard(lb) {
+  try {
+    const ul = document.getElementById('leaderboardList');
+    ul.innerHTML = '';
+    if (!lb.length) { ul.innerHTML = '<li style="justify-content:center;color:#8ba7c4;">لا توجد نتائج بعد</li>'; return; }
+    const uid = tgUser.id || 0;
+    const medals = ['🥇','🥈','🥉'];
+    lb.forEach((p, i) => {
+      const li = document.createElement('li');
+      if (p.user_id === uid) li.classList.add('me');
+      const rank = medals[i] || (i + 1) + '.';
+      li.innerHTML = `<span><span class="rank">${rank}</span>${escapeHtml(p.name)}</span><span class="pts">${p.score}</span>`;
+      ul.appendChild(li);
+    });
+  } catch(e) {}
+}
+
 function lbKey() { return 'neba_lb_' + (tgChat ? tgChat.id : 'local'); }
 function saveLocalScore() {
   try {
@@ -815,14 +453,9 @@ function saveLocalScore() {
     let lb = JSON.parse(localStorage.getItem(key) || '[]');
     const uid = tgUser.id || 0;
     const idx = lb.findIndex(x => x.id === uid);
-    if (idx >= 0) {
-      if (state.score > lb[idx].score) lb[idx].score = state.score;
-      lb[idx].name = tgUser.first_name || 'لاعب';
-    } else {
-      lb.push({ id: uid, name: tgUser.first_name || 'لاعب', score: state.score });
-    }
-    lb.sort((a, b) => b.score - a.score);
-    lb = lb.slice(0, 10);
+    if (idx >= 0) { if (state.score > lb[idx].score) lb[idx].score = state.score; lb[idx].name = tgUser.first_name || 'لاعب'; }
+    else { lb.push({ id: uid, name: tgUser.first_name || 'لاعب', score: state.score }); }
+    lb.sort((a, b) => b.score - a.score); lb = lb.slice(0, 10);
     localStorage.setItem(key, JSON.stringify(lb));
   } catch(e) {}
 }
@@ -831,10 +464,7 @@ function renderLeaderboard() {
     const lb = JSON.parse(localStorage.getItem(lbKey()) || '[]');
     const ul = document.getElementById('leaderboardList');
     ul.innerHTML = '';
-    if (!lb.length) {
-      ul.innerHTML = '<li style="justify-content:center;color:#8ba7c4;font-weight:500;">لا توجد نتائج بعد</li>';
-      return;
-    }
+    if (!lb.length) { ul.innerHTML = '<li style="justify-content:center;color:#8ba7c4;font-weight:500;">لا توجد نتائج بعد</li>'; return; }
     const uid = tgUser.id || 0;
     const medals = ['🥇','🥈','🥉'];
     lb.forEach((p, i) => {
@@ -846,65 +476,43 @@ function renderLeaderboard() {
     });
   } catch(e) {}
 }
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// ============ UI ============
 document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('restartBtn').addEventListener('click', () => {
-  if (autoSendTimer) { clearTimeout(autoSendTimer); autoSendTimer = null; }
-  startGame();
-});
+document.getElementById('restartBtn').addEventListener('click', startGame);
 
-// ============ Init ============
-try {
-  const sb = parseInt(localStorage.getItem('neba_best') || '0', 10);
-  if (!isNaN(sb)) state.best = sb;
-} catch(e){}
+try { const sb = parseInt(localStorage.getItem('neba_best') || '0', 10); if (!isNaN(sb)) state.best = sb; } catch(e){}
 updateBestBadge();
-
 computeLayout();
 initClouds();
 
-// ============ Loop with FPS cap ============
-let lastTime = 0;
-let lastRender = 0;
-const FRAME_MS = 15; // ~66 FPS سقف
+// ===== Warmup: pre-render frames to compile JIT before first play =====
+(function warmup() {
+  const tmpBird = { x: -100, y: -100, r: 15 * scale, rot: 0, wing: 0.5 };
+  state.bird = tmpBird;
+  for (let i = 0; i < 3; i++) render();
+  state.bird = null;
+})();
 
+let lastTime = 0, lastRender = 0;
+const FRAME_MS = 15;
 function loop(now) {
   requestAnimationFrame(loop);
-
-  // throttle: تجاوز الفريمات الزائدة على الشاشات 120Hz/144Hz
   if (now - lastRender < FRAME_MS) return;
   if (!lastTime) lastTime = now;
-
   let dt = (now - lastTime) / 1000;
-  lastTime = now;
-  lastRender = now;
+  lastTime = now; lastRender = now;
   if (dt > 0.05) dt = 0.05;
-
-  if (state.mode === 'playing') {
-    update(dt);
-  } else if (state.mode === 'menu') {
+  if (state.mode === 'playing') { update(dt); }
+  else if (state.mode === 'menu') {
     state.t += dt;
-    for (const c of state.clouds) {
-      c.x -= c.sp * dt;
-      if (c.x < -140) { c.x = W + 60; c.y = 60 * scale + Math.random() * H * 0.3; }
-    }
-    if (!state.bird) {
-      state.bird = {
-        x: playLeft + playW * BIRD_X_FRAC,
-        y: H * 0.42, vy: 0,
-        r: 15 * scale, rot: 0, wing: 0, alive: true,
-      };
-    }
+    for (const c of state.clouds) { c.x -= c.sp * dt; if (c.x < -140) { c.x = W + 60; c.y = 60 * scale + Math.random() * H * 0.3; } }
+    if (!state.bird) state.bird = { x: playLeft + playW * BIRD_X_FRAC, y: H * 0.42, vy: 0, r: 15 * scale, rot: 0, wing: 0, alive: true };
     const b = state.bird;
     b.y = H * 0.42 + Math.sin(state.t * 2.6) * 6 * scale;
     b.rot = Math.sin(state.t * 1.8) * 0.12;
     b.wing = 0.5 + 0.5 * Math.sin(state.t * 7);
   }
-
   render();
 }
 requestAnimationFrame(loop);
