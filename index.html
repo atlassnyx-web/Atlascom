@@ -19,7 +19,6 @@
   }
   #canvas { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; }
 
-  /* ===== HUD ===== */
   #hud {
     position:absolute; top:0; left:0; right:0;
     padding:12px 16px; pointer-events:none; z-index:5;
@@ -54,7 +53,6 @@
   #bestBadge .v { display:block; font-size:16px; color:#fff; font-weight:800; }
   #bestBadge .l { display:block; font-size:9px; color:#c8b26a; letter-spacing:1px; }
 
-  /* ===== Overlays ===== */
   .overlay {
     position:absolute; inset:0;
     display:none; flex-direction:column;
@@ -74,7 +72,7 @@
   .title-sub {
     font-family:'Cairo', sans-serif;
     font-size:14px; color:#8ba7c4; letter-spacing:6px;
-    margin-bottom:26px; font-weight:700;
+    margin-bottom:34px; font-weight:700;
   }
 
   .btn {
@@ -87,10 +85,6 @@
     margin:6px 0; letter-spacing:0.4px;
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #8b6f0f; }
-  .btn.secondary {
-    background: linear-gradient(180deg, #3b82f6, #1d4ed8);
-    box-shadow: 0 5px 0 #0c2d6b; color:#fff;
-  }
 
   .final-block {
     display:flex; gap:30px; margin:8px 0 22px;
@@ -132,12 +126,10 @@
   .leaderboard li .pts { color:#f5c518; font-weight:800; }
   .leaderboard li .rank { color:#8ba7c4; font-weight:700; margin-left:8px; font-size:13px; }
 
-  .hint {
-    max-width:320px; color:#8ba7c4; font-size:13px;
-    line-height:1.9; margin-bottom:22px; font-weight:500;
+  .auto-note {
+    font-size:12px; color:#8ba7c4; font-weight:600;
+    margin-top:10px; letter-spacing:0.5px;
   }
-  .hint b { color:#8bc34a; }
-  .hint .tap { color:#f5c518; font-weight:700; }
 </style>
 </head>
 <body>
@@ -154,20 +146,12 @@
   </div>
 </div>
 
-<!-- شاشة البداية -->
 <div class="overlay show" id="startScreen">
   <div class="title-main">فوج النيبة</div>
   <div class="title-sub">الـطـائـر</div>
-  <p class="hint">
-    • المس أي مكان عشان الطائر يطير<br>
-    • تفادى الأنابيب 🚧<br>
-    • كل <b>5 نقاط</b> = <span class="tap">مستوى أصعب</span><br>
-    • سجّل أعلى نتيجة لمجموعتك 🏆
-  </p>
   <button class="btn" id="startBtn">▶ ابدأ اللعب</button>
 </div>
 
-<!-- شاشة النهاية -->
 <div class="overlay" id="gameOverScreen">
   <div style="font-family:'Reem Kufi',sans-serif;font-size:26px;font-weight:700;color:#e94560;margin-bottom:8px;letter-spacing:1px;">انتهت اللعبة!</div>
   <div class="final-block">
@@ -181,7 +165,7 @@
     </div>
   </div>
   <button class="btn" id="restartBtn">🔄 العب مرة أخرى</button>
-  <button class="btn secondary" id="sendBtn">📤 أرسل نتيجتي للمجموعة</button>
+  <div class="auto-note" id="autoNote">📤 جاري إرسال نتيجتك للمجموعة...</div>
   <div class="leaderboard">
     <h3>🏆 أفضل اللاعبين في هذه المجموعة</h3>
     <ul id="leaderboardList"></ul>
@@ -197,7 +181,7 @@ if (tg) {
 const tgUser = tg?.initDataUnsafe?.user || { first_name: 'لاعب', id: 0 };
 const tgChat = tg?.initDataUnsafe?.chat || null;
 
-// ============ Audio (Web Audio API) ============
+// ============ Audio ============
 let audioCtx = null;
 function initAudio() {
   if (audioCtx) return;
@@ -219,18 +203,18 @@ function tone({ freq=440, type='sine', dur=0.1, vol=0.1, sweepTo=null } = {}) {
   osc.start(t);
   osc.stop(t + dur + 0.02);
 }
-function sfxFlap() { tone({ freq: 520, sweepTo: 340, type: 'sine', dur: 0.09, vol: 0.09 }); }
-function sfxScore() {
+function sfxFlap()   { tone({ freq: 520, sweepTo: 340, type: 'sine',     dur: 0.09, vol: 0.09 }); }
+function sfxScore()  {
   tone({ freq: 720, type: 'triangle', dur: 0.07, vol: 0.09 });
   setTimeout(() => tone({ freq: 980, type: 'triangle', dur: 0.09, vol: 0.09 }), 55);
 }
 function sfxHit() {
   tone({ freq: 180, sweepTo: 55, type: 'triangle', dur: 0.28, vol: 0.12 });
-  tone({ freq: 110, sweepTo: 40, type: 'sine', dur: 0.35, vol: 0.09 });
+  tone({ freq: 110, sweepTo: 40, type: 'sine',     dur: 0.35, vol: 0.09 });
 }
 function sfxLevelUp() {
-  tone({ freq: 620, type: 'triangle', dur: 0.08, vol: 0.09 });
-  setTimeout(() => tone({ freq: 820, type: 'triangle', dur: 0.08, vol: 0.09 }), 70);
+  tone({ freq: 620,  type: 'triangle', dur: 0.08, vol: 0.09 });
+  setTimeout(() => tone({ freq: 820,  type: 'triangle', dur: 0.08, vol: 0.09 }), 70);
   setTimeout(() => tone({ freq: 1080, type: 'triangle', dur: 0.13, vol: 0.09 }), 145);
 }
 
@@ -238,21 +222,27 @@ function sfxLevelUp() {
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { alpha: false });
 
-// Reference design size (portrait). All physics use these units × scale.
 const REF_W = 420;
 const REF_H = 700;
+const MAX_PIXELS = 1_300_000;   // سقف البكسل لضمان أداء سلس على أي جهاز
 
-// Layout state
 let W = 0, H = 0, DPR = 1;
 let scale = 1;
 let playLeft = 0, playRight = 0, playW = 0;
 let bgCache = null;
+let birdGlowCache = null;
 
 function computeLayout() {
-  // Cap DPR for performance on weak/high-DPI devices
-  DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
   W = window.innerWidth;
   H = window.innerHeight;
+
+  // ===== سقف البكسل — هذا هو الحل الأهم للاق =====
+  if (W * H * dpr * dpr > MAX_PIXELS) {
+    dpr = Math.sqrt(MAX_PIXELS / (W * H));
+  }
+  dpr = Math.max(0.75, dpr);
+  DPR = dpr;
 
   canvas.width  = Math.floor(W * DPR);
   canvas.height = Math.floor(H * DPR);
@@ -275,10 +265,10 @@ function computeLayout() {
   }
 
   buildBackgroundCache();
+  buildBirdGlowCache();
   if (state.bird) repositionBird();
 }
 
-// Pre-rendered background (sky + stars). Drawn once per resize.
 function buildBackgroundCache() {
   bgCache = document.createElement('canvas');
   bgCache.width = canvas.width;
@@ -286,7 +276,6 @@ function buildBackgroundCache() {
   const b = bgCache.getContext('2d');
   b.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-  // Sky gradient
   const sky = b.createLinearGradient(0, 0, 0, H);
   sky.addColorStop(0.00, '#0e1a2b');
   sky.addColorStop(0.45, '#182a44');
@@ -296,7 +285,6 @@ function buildBackgroundCache() {
   b.fillStyle = sky;
   b.fillRect(0, 0, W, H);
 
-  // Stars (pre-rendered once)
   b.fillStyle = '#ffffff';
   for (let i = 0; i < 18; i++) {
     b.globalAlpha = 0.3 + Math.random() * 0.5;
@@ -307,7 +295,6 @@ function buildBackgroundCache() {
   }
   b.globalAlpha = 1;
 
-  // Sun glow (pre-rendered)
   const sunX = W * 0.78, sunY = H * 0.6, sunR = 60 * scale;
   const sg = b.createRadialGradient(sunX, sunY, 2, sunX, sunY, sunR * 2.2);
   sg.addColorStop(0, 'rgba(255,225,160,0.7)');
@@ -322,40 +309,55 @@ function buildBackgroundCache() {
   b.arc(sunX, sunY, sunR * 0.45, 0, Math.PI * 2);
   b.fill();
 
-  // Faded side panels on wide screens (decorative frame)
+  // Side vignettes on wide screens
   if (playLeft > 4) {
     const lg = b.createLinearGradient(0, 0, playLeft, 0);
-    lg.addColorStop(0, 'rgba(0,0,0,0.55)');
+    lg.addColorStop(0, 'rgba(0,0,0,0.5)');
     lg.addColorStop(1, 'rgba(0,0,0,0)');
     b.fillStyle = lg;
     b.fillRect(0, 0, playLeft, H);
 
     const rg = b.createLinearGradient(W, 0, playRight, 0);
-    rg.addColorStop(0, 'rgba(0,0,0,0.55)');
+    rg.addColorStop(0, 'rgba(0,0,0,0.5)');
     rg.addColorStop(1, 'rgba(0,0,0,0)');
     b.fillStyle = rg;
     b.fillRect(playRight, 0, W - playRight, H);
   }
 }
 
+// Bird glow is a circle, so we cache it as a small image
+function buildBirdGlowCache() {
+  birdGlowCache = document.createElement('canvas');
+  const gs = 128;
+  birdGlowCache.width = gs;
+  birdGlowCache.height = gs;
+  const gCtx = birdGlowCache.getContext('2d');
+  const grad = gCtx.createRadialGradient(gs/2, gs/2, gs*0.25, gs/2, gs/2, gs/2);
+  grad.addColorStop(0, 'rgba(245,197,24,0.55)');
+  grad.addColorStop(0.7, 'rgba(245,197,24,0.18)');
+  grad.addColorStop(1, 'rgba(245,197,24,0)');
+  gCtx.fillStyle = grad;
+  gCtx.fillRect(0, 0, gs, gs);
+}
+
 window.addEventListener('resize', computeLayout);
 
-// ============ Game Constants (in REF units) ============
-const GRAVITY    = 900;    // px/s^2 at scale=1
-const FLAP_VY    = -380;   // px/s at scale=1
-const MAX_FALL   = 620;
-const BASE_SPEED = 190;
-const MAX_SPEED  = 320;
+// ============ Constants ============
+const GRAVITY    = 980;
+const FLAP_VY    = -400;
+const MAX_FALL   = 680;
+const BASE_SPEED = 215;
+const MAX_SPEED  = 340;
 const PIPE_W     = 66;
 const PIPE_CAP_H = 24;
 const BASE_GAP   = 200;
 const MIN_GAP    = 145;
 const GROUND_H   = 90;
 const BIRD_X_FRAC = 0.30;
-const BASE_INTERVAL = 1.6;
-const MIN_INTERVAL  = 1.05;
+const BASE_INTERVAL = 1.55;
+const MIN_INTERVAL  = 1.02;
 
-// ============ Game State ============
+// ============ State ============
 const state = {
   mode: 'menu',
   score: 0,
@@ -372,6 +374,8 @@ const state = {
   levelFlash: 0,
   scorePop: 0,
 };
+
+let autoSendTimer = null;
 
 function repositionBird() {
   if (!state.bird) return;
@@ -405,7 +409,7 @@ function resetGame() {
 
 function initClouds() {
   state.clouds.length = 0;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     state.clouds.push({
       x: Math.random() * W,
       y: 60 * scale + Math.random() * H * 0.3,
@@ -442,8 +446,9 @@ function spawnPipe() {
   const minY = margin + gapH / 2;
   const maxY = H - GROUND_H * scale - margin - gapH / 2;
   const gapY = minY + Math.random() * Math.max(1, (maxY - minY));
+  // تطلع من حافة الشاشة اليمنى
   state.pipes.push({
-    x: playRight + PIPE_W * scale,
+    x: W + PIPE_W * scale,
     gapY, gapH, passed: false,
   });
 }
@@ -458,44 +463,37 @@ function update(dt) {
   const interval = Math.max(MIN_INTERVAL, BASE_INTERVAL - (state.level - 1) * 0.07);
 
   const b = state.bird;
-  // Physics
   b.vy += GRAVITY * scale * dt;
   if (b.vy > MAX_FALL * scale) b.vy = MAX_FALL * scale;
   b.y += b.vy * dt;
 
-  // Rotation smoothing
   const targetRot = Math.max(-0.45, Math.min(1.1, b.vy / (700 * scale)));
   b.rot += (targetRot - b.rot) * Math.min(1, dt * 9);
 
-  // Wing
   if (b.wing > 0) b.wing = Math.max(0, b.wing - dt * 3);
 
-  // Ceiling
   if (b.y - b.r < 0) { b.y = b.r; b.vy = 0; }
 
-  // Ground
   const gy = H - GROUND_H * scale;
   if (b.y + b.r >= gy) { b.y = gy - b.r; gameOver(); return; }
 
   state.groundOffset += speed * dt;
   if (state.groundOffset > 60 * scale) state.groundOffset -= 60 * scale;
 
-  // Spawn
   state.spawnTimer -= dt;
   if (state.spawnTimer <= 0) {
     state.spawnTimer = interval;
     spawnPipe();
   }
 
-  // Pipes
   const pipeW = PIPE_W * scale;
   for (let i = state.pipes.length - 1; i >= 0; i--) {
     const p = state.pipes[i];
     p.x -= speed * dt;
 
-    if (p.x + pipeW < playLeft - 20) { state.pipes.splice(i, 1); continue; }
+    // تختفي بس لما تطلع من الحافة اليسرى للشاشة
+    if (p.x + pipeW < -10) { state.pipes.splice(i, 1); continue; }
 
-    // Collision (AABB vs circle, simplified)
     const bx1 = b.x - b.r * 0.85, bx2 = b.x + b.r * 0.85;
     const by1 = b.y - b.r * 0.85, by2 = b.y + b.r * 0.85;
     const pL = p.x, pR = p.x + pipeW;
@@ -507,7 +505,6 @@ function update(dt) {
       if (by2 > pBotT) { gameOver(); return; }
     }
 
-    // Score
     if (!p.passed && pR < b.x - b.r) {
       p.passed = true;
       state.score++;
@@ -522,7 +519,6 @@ function update(dt) {
     }
   }
 
-  // Clouds
   for (const c of state.clouds) {
     c.x -= c.sp * dt;
     if (c.x < -140) {
@@ -542,28 +538,17 @@ function render() {
   const shX = state.shake > 0 ? (Math.random() - 0.5) * state.shake : 0;
   const shY = state.shake > 0 ? (Math.random() - 0.5) * state.shake : 0;
 
-  // Draw pre-rendered background (sky + stars + sun + side vignettes)
   if (bgCache) ctx.drawImage(bgCache, 0, 0, W, H);
 
   ctx.save();
   ctx.translate(shX, shY);
 
-  // Clouds
   for (const c of state.clouds) drawCloud(c.x, c.y, c.s, c.a);
-
-  // Distant hills (simple)
   drawHills();
-
-  // Pipes
   for (let i = 0; i < state.pipes.length; i++) drawPipe(state.pipes[i]);
-
-  // Ground
   drawGround();
-
-  // Bird
   if (state.bird) drawBird(state.bird);
 
-  // Big score
   if (state.mode === 'playing') {
     const pop = state.scorePop > 0 ? 1 + state.scorePop * 0.5 : 1;
     ctx.save();
@@ -579,13 +564,11 @@ function render() {
     ctx.restore();
   }
 
-  // Hit flash
   if (state.hitFlash > 0) {
     ctx.fillStyle = `rgba(233,69,96,${(state.hitFlash / 0.4) * 0.5})`;
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Level up flash
   if (state.levelFlash > 0) {
     const a = state.levelFlash / 1.3;
     ctx.fillStyle = `rgba(245,197,24,${a * 0.15})`;
@@ -599,7 +582,6 @@ function render() {
     ctx.globalAlpha = 1;
   }
 
-  // Tap hint on menu
   if (state.mode === 'menu') {
     const pulse = 0.5 + 0.5 * Math.sin(state.t * 2.4);
     ctx.globalAlpha = 0.5 + pulse * 0.4;
@@ -646,78 +628,54 @@ function drawHills() {
 
 function drawGround() {
   const gy = H - GROUND_H * scale;
-  // Base brown (solid)
   ctx.fillStyle = '#2c2118';
   ctx.fillRect(0, gy, W, GROUND_H * scale);
-  // Sand top strip
   ctx.fillStyle = '#c8a86b';
   ctx.fillRect(0, gy, W, 5 * scale);
   ctx.fillStyle = '#8a7043';
   ctx.fillRect(0, gy + 5 * scale, W, 3 * scale);
-  // Scrolling stripes
+
   const sw = 32 * scale;
   const off = state.groundOffset % sw;
-  ctx.fillStyle = 'rgba(200,168,107,0.22)';
+  ctx.fillStyle = '#3a2c1e';
   for (let x = -sw + off; x < W; x += sw) {
     ctx.fillRect(x, gy + 12 * scale, 3 * scale, GROUND_H * scale - 12 * scale);
   }
-  // Gold top line
-  ctx.fillStyle = 'rgba(245,197,24,0.35)';
+  ctx.fillStyle = '#f5c518';
   ctx.fillRect(0, gy - 1, W, 1);
 }
 
+// **مبسط جداً للأداء** — كان ~12 عملية، الآن ~5
 function drawPipe(p) {
   const pw = PIPE_W * scale;
   const capH = PIPE_CAP_H * scale;
-  const overhang = 5 * scale;
+  const oh = 5 * scale;
   const pTopB = p.gapY - p.gapH / 2;
   const pBotT = p.gapY + p.gapH / 2;
 
-  // Solid body color (avoid per-frame gradients)
-  const bodyColor = '#2e7d32';
-  const bodyShadow = '#1a4d1e';
-  const edgeHi = '#8bc34a';
-
-  // Top pipe body
-  ctx.fillStyle = bodyColor;
+  // جسم الأنبوب العلوي (لون واحد)
+  ctx.fillStyle = '#2e7d32';
   ctx.fillRect(p.x, 0, pw, pTopB - capH);
-  ctx.fillStyle = bodyShadow;
-  ctx.fillRect(p.x, 0, pw * 0.22, pTopB - capH);
-  ctx.fillStyle = edgeHi;
-  ctx.fillRect(p.x + pw * 0.35, 0, pw * 0.12, pTopB - capH);
 
-  // Top cap
-  ctx.fillStyle = bodyColor;
-  ctx.fillRect(p.x - overhang, pTopB - capH, pw + overhang * 2, capH);
-  ctx.fillStyle = bodyShadow;
-  ctx.fillRect(p.x - overhang, pTopB - capH, (pw + overhang * 2) * 0.22, capH);
-  ctx.strokeStyle = 'rgba(139,195,74,0.55)';
-  ctx.lineWidth = 1.5 * scale;
-  ctx.strokeRect(p.x - overhang, pTopB - capH, pw + overhang * 2, capH);
+  // كاب علوي
+  ctx.fillRect(p.x - oh, pTopB - capH, pw + oh * 2, capH);
+  ctx.fillStyle = '#8bc34a';
+  ctx.fillRect(p.x - oh, pTopB - capH + capH * 0.15, pw + oh * 2, capH * 0.12);
 
-  // Bottom pipe cap
-  ctx.fillStyle = bodyColor;
-  ctx.fillRect(p.x - overhang, pBotT, pw + overhang * 2, capH);
-  ctx.fillStyle = bodyShadow;
-  ctx.fillRect(p.x - overhang, pBotT, (pw + overhang * 2) * 0.22, capH);
-  ctx.strokeStyle = 'rgba(139,195,74,0.55)';
-  ctx.strokeRect(p.x - overhang, pBotT, pw + overhang * 2, capH);
+  // كاب سفلي
+  ctx.fillStyle = '#2e7d32';
+  ctx.fillRect(p.x - oh, pBotT, pw + oh * 2, capH);
+  ctx.fillStyle = '#8bc34a';
+  ctx.fillRect(p.x - oh, pBotT + capH * 0.73, pw + oh * 2, capH * 0.12);
 
-  // Bottom pipe body
-  const botBodyY = pBotT + capH;
-  const botBodyH = H - GROUND_H * scale - botBodyY;
-  if (botBodyH > 0) {
-    ctx.fillStyle = bodyColor;
-    ctx.fillRect(p.x, botBodyY, pw, botBodyH);
-    ctx.fillStyle = bodyShadow;
-    ctx.fillRect(p.x, botBodyY, pw * 0.22, botBodyH);
-    ctx.fillStyle = edgeHi;
-    ctx.fillRect(p.x + pw * 0.35, botBodyY, pw * 0.12, botBodyH);
-  }
+  // جسم الأنبوب السفلي
+  ctx.fillStyle = '#2e7d32';
+  const botY = pBotT + capH;
+  const botH = H - GROUND_H * scale - botY;
+  if (botH > 0) ctx.fillRect(p.x, botY, pw, botH);
 }
 
 function drawBird(b) {
-  // Ground shadow (soft ellipse)
   const gy = H - GROUND_H * scale;
   const dist = Math.max(0, gy - b.y);
   const maxDist = H * 0.7;
@@ -732,40 +690,29 @@ function drawBird(b) {
     ctx.globalAlpha = 1;
   }
 
+  const r = b.r;
+
+  // التوهج (صورة جاهزة — بدون إنشاء كل فريم)
+  if (birdGlowCache) {
+    ctx.drawImage(birdGlowCache, b.x - r * 1.9, b.y - r * 1.9, r * 3.8, r * 3.8);
+  }
+
   ctx.save();
   ctx.translate(b.x, b.y);
   ctx.rotate(b.rot);
 
-  const r = b.r;
-
-  // Soft glow (cheap: single radial gradient created per frame — but only ONE, cheap on modern browsers)
-  const glow = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 1.9);
-  glow.addColorStop(0, 'rgba(245,197,24,0.5)');
-  glow.addColorStop(1, 'rgba(245,197,24,0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(0, 0, r * 1.9, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Body
+  // الجسم
   ctx.fillStyle = '#f5c518';
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // Belly highlight
-  ctx.fillStyle = 'rgba(255,245,184,0.75)';
+  ctx.fillStyle = '#fff5b8';
   ctx.beginPath();
   ctx.ellipse(-r * 0.15, -r * 0.25, r * 0.55, r * 0.4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Belly bottom
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.beginPath();
-  ctx.ellipse(0, r * 0.4, r * 0.5, r * 0.3, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Eye
+  // العين
   ctx.fillStyle = '#fff';
   ctx.beginPath();
   ctx.arc(r * 0.38, -r * 0.35, r * 0.32, 0, Math.PI * 2);
@@ -779,7 +726,7 @@ function drawBird(b) {
   ctx.arc(r * 0.53, -r * 0.42, r * 0.05, 0, Math.PI * 2);
   ctx.fill();
 
-  // Beak
+  // المنقار
   ctx.fillStyle = '#ff8c00';
   ctx.beginPath();
   ctx.moveTo(r * 0.82, -r * 0.05);
@@ -787,11 +734,8 @@ function drawBird(b) {
   ctx.lineTo(r * 0.82, r * 0.24);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = '#a35400';
-  ctx.lineWidth = 1.4 * scale;
-  ctx.stroke();
 
-  // Wing (animated)
+  // الجنح
   const wingAngle = -0.6 + b.wing * 1.2;
   ctx.save();
   ctx.translate(-r * 0.15, r * 0.05);
@@ -800,9 +744,6 @@ function drawBird(b) {
   ctx.beginPath();
   ctx.ellipse(-r * 0.5, 0, r * 0.72, r * 0.4, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(120,80,0,0.6)';
-  ctx.lineWidth = 1.1 * scale;
-  ctx.stroke();
   ctx.restore();
 
   ctx.restore();
@@ -815,6 +756,7 @@ function updateBestBadge() {
 
 // ============ Flow ============
 function startGame() {
+  if (autoSendTimer) { clearTimeout(autoSendTimer); autoSendTimer = null; }
   initAudio();
   if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch(e){} }
   document.getElementById('startScreen').classList.remove('show');
@@ -840,6 +782,29 @@ function gameOver() {
   document.getElementById('finalLevel').textContent = state.level;
   renderLeaderboard();
   document.getElementById('gameOverScreen').classList.add('show');
+
+  const note = document.getElementById('autoNote');
+  if (tg && tg.sendData) {
+    note.textContent = '📤 جاري إرسال نتيجتك للمجموعة...';
+    autoSendTimer = setTimeout(() => {
+      autoSendTimer = null;
+      sendScoreToBot();
+    }, 2000);
+  } else {
+    note.textContent = 'النتيجة محفوظة محلياً';
+  }
+}
+
+function sendScoreToBot() {
+  if (!tg || !tg.sendData) return;
+  const payload = JSON.stringify({
+    action: 'save_score',
+    score: state.score,
+    level: state.level,
+    name: tgUser.first_name || 'لاعب',
+    user_id: tgUser.id || 0,
+  });
+  try { tg.sendData(payload); } catch(e) {}
 }
 
 // ============ Leaderboard ============
@@ -885,20 +850,11 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ============ UI Events ============
+// ============ UI ============
 document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('restartBtn').addEventListener('click', startGame);
-document.getElementById('sendBtn').addEventListener('click', () => {
-  if (!tg || !tg.sendData) { alert('هذه الميزة تعمل داخل تيليجرام فقط.'); return; }
-  const payload = JSON.stringify({
-    action: 'save_score',
-    score: state.score,
-    level: state.level,
-    name: tgUser.first_name || 'لاعب',
-    user_id: tgUser.id || 0,
-  });
-  try { tg.sendData(payload); tg.close(); }
-  catch(e) { alert('تعذر الإرسال. افتح اللعبة من داخل المجموعة.'); }
+document.getElementById('restartBtn').addEventListener('click', () => {
+  if (autoSendTimer) { clearTimeout(autoSendTimer); autoSendTimer = null; }
+  startGame();
 });
 
 // ============ Init ============
@@ -911,12 +867,21 @@ updateBestBadge();
 computeLayout();
 initClouds();
 
-// ============ Loop ============
+// ============ Loop with FPS cap ============
 let lastTime = 0;
+let lastRender = 0;
+const FRAME_MS = 15; // ~66 FPS سقف
+
 function loop(now) {
+  requestAnimationFrame(loop);
+
+  // throttle: تجاوز الفريمات الزائدة على الشاشات 120Hz/144Hz
+  if (now - lastRender < FRAME_MS) return;
   if (!lastTime) lastTime = now;
+
   let dt = (now - lastTime) / 1000;
   lastTime = now;
+  lastRender = now;
   if (dt > 0.05) dt = 0.05;
 
   if (state.mode === 'playing') {
@@ -941,11 +906,9 @@ function loop(now) {
   }
 
   render();
-  requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
-// Pause audio when hidden
 document.addEventListener('visibilitychange', () => {
   if (!audioCtx) return;
   if (document.hidden) { try { audioCtx.suspend(); } catch(e){} }
